@@ -1,67 +1,124 @@
 ---@diagnostic disable: undefined-global
--- Player module
---
--- Responsibilities:
--- - Create a Box2D dynamic body and rectangle fixture for the player
--- - Keep a simple pixel-space position (self.x/self.y) in sync with the body
--- - Draw a centered rectangle as a placeholder sprite
---
--- Units:
--- - We set love.physics.setMeter(1) in main.lua, so 1 meter = 1 pixel.
--- - Code still queries love.physics.getMeter() so it’s robust if you change it later.
---
--- Notes:
--- - Fixture has density so the body has mass; friction/restitution for contact behavior;
---   sensor=false so it collides physically; userData tag helps debug overlay color it red.
+-- Player module: platformer-style movement with Box2D body
+-- - Uses pixel units (meter=1) to match STI colliders
+-- - Handles left/right movement, friction, gravity, and jumping
+-- - Detects grounding via world contact callbacks using collision normals
 local Player = {}
 
 function Player:load(world, x, y)
-    -- Spawn position in pixels
-    self.x = x or 100
-    self.y = y or 0
-    self.width = 16
-    self.height = 16
-    -- Initial desired pixel velocity (converted to physics units each frame)
-    self.xVel = 0
-    self.yVel = 50
-    self.maxSpeed = 200
-    self.acceleration = 4000
-    self.friction = 3000
-    self.color = {0.9, 0.3, 0.3, 1}
+   -- Dimensions and spawn
+   self.x = x or 100
+   self.y = y or 0
+   self.width = 20
+   self.height = 60
 
-    local meter = love.physics.getMeter() -- pixels per meter (set to 1 in main.lua)
-    self.physics = {}
-    -- Create body in meters so it matches STI colliders (pixels/meter)
-    self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, "dynamic")
-    self.physics.body:setFixedRotation(true)
-    -- Shape dimensions in meters
-    self.physics.shape = love.physics.newRectangleShape(self.width / meter, self.height / meter)
-    self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
-    self.physics.fixture:setDensity(1)
-    self.physics.fixture:setFriction(0.8)
-    self.physics.fixture:setRestitution(0)
-    self.physics.fixture:setSensor(false)
-    self.physics.fixture:setUserData({ tag = "player" })
-    -- Recompute mass properties after density change
-    self.physics.body:resetMassData()
+   -- Kinematics and tuning
+   self.xVel = 0
+   self.yVel = 0
+   self.maxSpeed = 200
+   self.acceleration = 4000
+   self.friction = 3500
+   self.gravity = 1500
+   self.jumpAmount = -500
+   self.grounded = false
+
+   self.color = {0.9, 0.3, 0.3, 1}
+
+   local meter = love.physics.getMeter() -- (1 pixel per meter)
+   self.physics = {}
+   -- Body at center (Box2D origin at shape center)
+   self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, "dynamic")
+   self.physics.body:setFixedRotation(true)
+   -- Rectangle shape (full width/height)
+   self.physics.shape = love.physics.newRectangleShape(self.width / meter, self.height / meter)
+   self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
+   self.physics.fixture:setDensity(1)
+   self.physics.fixture:setFriction(0.8)
+   self.physics.fixture:setRestitution(0)
+   self.physics.fixture:setSensor(false)
+   self.physics.fixture:setUserData({ tag = "player" })
+   self.physics.body:resetMassData()
 end
 
 function Player:update(dt)
-    self:syncPhysics()
+   -- Apply control + physics integration order:
+   -- 1) movement/friction (horizontal), 2) gravity (vertical), 3) sync to body
+   self:move(dt)
+   self:applyGravity(dt)
+   self:syncPhysics()
 end
 
 function Player:syncPhysics(dt)
-    local meter = love.physics.getMeter()
-    local bx, by = self.physics.body:getPosition()
-    -- Convert body center (meters) to pixels for drawing
-    self.x, self.y = bx * meter, by * meter
-    -- If you set pixel velocities, convert to m/s for physics
-    self.physics.body:setLinearVelocity(self.xVel / meter, self.yVel / meter)
+   local meter = love.physics.getMeter()
+   -- Drive body velocity from our desired pixel velocities
+   self.physics.body:setLinearVelocity(self.xVel / meter, self.yVel / meter)
+   -- Read back body position for drawing
+   local bx, by = self.physics.body:getPosition()
+   self.x, self.y = bx * meter, by * meter
+end
 
+function Player:applyGravity(dt)
+   if not self.grounded then
+      self.yVel = self.yVel + self.gravity * dt
+   end
+end
+
+function Player:move(dt)
+   if love.keyboard.isDown("d", "right") then
+      if self.xVel < self.maxSpeed then
+         self.xVel = math.min(self.xVel + self.acceleration * dt, self.maxSpeed)
+      end
+   elseif love.keyboard.isDown("a", "left") then
+      if self.xVel > -self.maxSpeed then
+         self.xVel = math.max(self.xVel - self.acceleration * dt, -self.maxSpeed)
+      end
+   else
+      self:applyFriction(dt)
+   end
+end
+
+function Player:applyFriction(dt)
+   if self.xVel > 0 then
+      self.xVel = math.max(self.xVel - self.friction * dt, 0)
+   elseif self.xVel < 0 then
+      self.xVel = math.min(self.xVel + self.friction * dt, 0)
+   end
+end
+
+function Player:jump(key)
+   if (key == "w" or key == "up") and self.grounded then
+      self.yVel = self.jumpAmount
+      self.grounded = false
+   end
+end
+
+-- Ground detection via contact normals
+function Player:beginContact(a, b, collision)
+   if self.grounded then return end
+   local nx, ny = collision:getNormal()
+   if a == self.physics.fixture then
+      if ny > 0 then self:land(collision) end
+   elseif b == self.physics.fixture then
+      if ny < 0 then self:land(collision) end
+   end
+end
+
+function Player:endContact(a, b, collision)
+   if a == self.physics.fixture or b == self.physics.fixture then
+      if self.currentGroundCollision == collision then
+         self.grounded = false
+      end
+   end
+end
+
+function Player:land(collision)
+   self.currentGroundCollision = collision
+   self.yVel = 0
+   self.grounded = true
 end
 
 function Player:draw()
-    -- Draw centered rectangle as placeholder player sprite
+   -- Draw centered rectangle as placeholder player sprite
     love.graphics.setColor(self.color)
     love.graphics.rectangle("fill", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
     love.graphics.setColor(1,1,1,1)

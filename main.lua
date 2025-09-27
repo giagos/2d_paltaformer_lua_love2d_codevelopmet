@@ -30,6 +30,8 @@ function love.load()
 
 	-- Create the Box2D world (no gravity per your preference)
 	world = love.physics.newWorld(0, 0)
+	-- Forward Box2D contacts to our handlers
+	world:setCallbacks(beginContact, endContact)
 
 	-- Ask STI to create Box2D fixtures from collidable layers/objects in the map
 	map:box2d_init(world)
@@ -93,6 +95,23 @@ function love.keypressed(key)
 		end
 	elseif key == "escape" then
 		love.event.quit()
+	end
+	-- Jump input (W/Up) handled inside player
+	if player and player.jump then
+		player:jump(key)
+	end
+end
+
+-- Box2D world contact callbacks
+function beginContact(a, b, collision)
+	if player and player.beginContact then
+		player:beginContact(a, b, collision)
+	end
+end
+
+function endContact(a, b, collision)
+	if player and player.endContact then
+		player:endContact(a, b, collision)
 	end
 end
 
