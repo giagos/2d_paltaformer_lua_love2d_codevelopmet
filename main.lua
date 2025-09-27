@@ -4,7 +4,7 @@
 local sti = require("sti")
 
 local map
-local scale = 1
+local scale = 2
 
 function love.load()
 	map = sti("tiled/map/1.lua")
