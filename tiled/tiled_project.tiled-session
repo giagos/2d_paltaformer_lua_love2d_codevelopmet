@@ -16,7 +16,8 @@
             }
         }
     },
-    "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
+    "last.exportedFilePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
+    "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
     "map.height": 23,
     "map.lastUsedExportFilter": "Lua files (*.lua)",
     "map.lastUsedFormat": "tmx",
@@ -29,5 +30,10 @@
     "project": "tiled_project.tiled-project",
     "recentFiles": [
         "map/tmx/untitled.tmx"
-    ]
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
 }
