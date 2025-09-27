@@ -7,10 +7,10 @@ local Player = {}
 
 function Player:load(world, x, y)
    -- Dimensions and spawn
-   self.x = x or 100
-   self.y = y or 0
-   self.width = 20
-   self.height = 60
+   self.x = 100
+   self.y = 0
+   self.width = 16
+   self.height = 16
 
    -- Kinematics and tuning
    self.xVel = 0
@@ -86,7 +86,7 @@ function Player:applyFriction(dt)
 end
 
 function Player:jump(key)
-   if (key == "w" or key == "up") and self.grounded then
+   if (key == "w" or key == "up" or key == "space") and self.grounded then
       self.yVel = self.jumpAmount
       self.grounded = false
    end
