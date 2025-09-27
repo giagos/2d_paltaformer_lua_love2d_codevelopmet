@@ -12,7 +12,7 @@ function love.load()
 	world = love.physics.newWorld(0,0)
 	map:box2d_init(world)
 	map.layers.solid.visible = false
-	--background = love.graphics.newImage()
+	background = love.graphics.newImage("asets/sprites/background.png")
 end
 
 function love.update(dt)
