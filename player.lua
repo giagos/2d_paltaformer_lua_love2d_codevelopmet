@@ -64,11 +64,20 @@ function Player:applyGravity(dt)
 end
 
 function Player:move(dt)
-   if love.keyboard.isDown("d", "right") then
+   local right = love.keyboard.isDown("d", "right")
+   local left  = love.keyboard.isDown("a", "left")
+
+   -- If both directions are pressed, treat as no input (apply friction)
+   if right and left then
+      self:applyFriction(dt)
+      return
+   end
+
+   if right then
       if self.xVel < self.maxSpeed then
          self.xVel = math.min(self.xVel + self.acceleration * dt, self.maxSpeed)
       end
-   elseif love.keyboard.isDown("a", "left") then
+   elseif left then
       if self.xVel > -self.maxSpeed then
          self.xVel = math.max(self.xVel - self.acceleration * dt, -self.maxSpeed)
       end
