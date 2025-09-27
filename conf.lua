@@ -1,3 +1,4 @@
+-- ye boi
 --- Minimal LÖVE configuration
 ---@diagnostic disable: undefined-global
 -- Keep it small and compatible across LÖVE 11.x
