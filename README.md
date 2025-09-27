@@ -23,3 +23,10 @@ Repo: https://github.com/karai17/Simple-Tiled-Implementation
 
 After adding STI, the project will load and draw `tiled/map/1.lua` automatically.
 
+
+## Controls
+
+- F2: Toggle collider debug overlay
+- R: Reset player to (64, 64)
+- ESC: Quit
+

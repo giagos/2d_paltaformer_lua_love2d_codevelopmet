@@ -1,8 +1,14 @@
 ---@diagnostic disable: undefined-global
 -- Transparent Box2D collider debug drawing
+-- Purpose:
+-- - Visualize all Box2D fixtures with a semi-transparent overlay.
+-- - Player fixtures are colored red; map fixtures green.
+-- Behavior:
+-- - Does NOT change global graphics scale. Draw it after applying your visual scale
+--   (we scale by `scale` in main.lua before calling this).
 -- Usage:
 --   local DebugDraw = require('debugdraw')
---   DebugDraw.drawWorldTransparent(world) -- call inside your draw(), after scaling
+--   DebugDraw.drawWorldTransparent(world) -- call inside love.draw(), after scaling
 
 local DebugDraw = {}
 
