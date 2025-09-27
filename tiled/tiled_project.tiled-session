@@ -5,24 +5,32 @@
     },
     "activeFile": "map/tmx/untitled.tmx",
     "expandedProjectPaths": [
+        "map/tmx",
+        "map",
+        ".",
+        "map/tsx"
     ],
     "fileStates": {
         "": {
             "scaleInDock": 1
         },
         "map/tmx/untitled.tmx": {
-            "scale": 0.927734375,
-            "selectedLayer": 0,
+            "scale": 2,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 279.17473684210523,
-                "y": 183.78105263157894
+                "x": 323.5,
+                "y": 150.75
             }
         },
-        "map/tsx/placeholder.tsx": {
+        "map/tmx/untitled.tmx#placeholder": {
             "scaleInDock": 1
+        },
+        "map/tsx/placeholder.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         }
     },
-    "last.exportedFilePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
+    "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
     "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
     "map.height": 23,
     "map.lastUsedExportFilter": "Lua files (*.lua)",
@@ -31,11 +39,13 @@
     "map.tileWidth": 16,
     "map.width": 40,
     "openFiles": [
-        "map/tmx/untitled.tmx"
+        "map/tmx/untitled.tmx",
+        "map/tsx/placeholder.tsx"
     ],
     "project": "tiled_project.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "map/tsx/placeholder.tsx",
         "map/tmx/untitled.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",

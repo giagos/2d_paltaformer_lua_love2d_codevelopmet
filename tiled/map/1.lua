@@ -99,21 +99,23 @@ return {
       offsety = 0,
       parallaxx = 1,
       parallaxy = 1,
-      properties = {},
+      properties = {
+        ["collidable"] = true
+      },
       objects = {
         {
           id = 5,
           name = "",
           type = "",
           shape = "rectangle",
-          x = 1,
-          y = 289.364,
-          width = 641.485,
-          height = 79.2121,
+          x = 0.5,
+          y = 287,
+          width = 645.985,
+          height = 81.7121,
           rotation = 0,
           visible = true,
           properties = {
-            ["colidable"] = true
+            ["collidable"] = true
           }
         }
       }
