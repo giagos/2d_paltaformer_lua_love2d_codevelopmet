@@ -7,6 +7,9 @@
     "expandedProjectPaths": [
     ],
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "map/tmx/untitled.tmx": {
             "scale": 0.927734375,
             "selectedLayer": 0,
@@ -14,9 +17,6 @@
                 "x": 279.17473684210523,
                 "y": 183.78105263157894
             }
-        },
-        "map/tsx/placeholder.tsx": {
-            "scaleInDock": 1
         }
     },
     "last.exportedFilePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
@@ -31,6 +31,7 @@
         "map/tmx/untitled.tmx"
     ],
     "project": "tiled_project.tiled-project",
+    "property.type": "bool",
     "recentFiles": [
         "map/tmx/untitled.tmx"
     ],
