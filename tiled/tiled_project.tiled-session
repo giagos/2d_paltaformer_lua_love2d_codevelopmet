@@ -16,7 +16,9 @@
             }
         }
     },
+    "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
     "map.height": 23,
+    "map.lastUsedExportFilter": "Lua files (*.lua)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,

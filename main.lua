@@ -1,31 +1,27 @@
---- Minimal LÖVE entry point
 ---@diagnostic disable: undefined-global
+-- minimal STI map loader
+ 
+local sti = require("sti")
 
-local TITLE = "2D Platformer (Empty)"
+local map
+local scale = 1
 
 function love.load()
-  love.window.setTitle(TITLE)
-  -- Background color (LÖVE 11.x uses 0..1 values)
-  if love.graphics.setBackgroundColor then
-    love.graphics.setBackgroundColor(0.10, 0.10, 0.12, 1.0)
-  end
+	map = sti("tiled/map/1.lua")
 end
 
 function love.update(dt)
-  -- No game logic yet
+	if map and map.update then
+		map:update(dt)
+	end
 end
 
 function love.draw()
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.printf("It works! Press ESC to quit.", 0, h/2 - 8, w, "center")
+	love.graphics.push()
+	love.graphics.scale(scale, scale)
+	if map and map.draw then
+		map:draw()
+	end
+	love.graphics.pop()
 end
 
-function love.keypressed(key)
-  if key == "escape" then
-    love.event.quit()
-  elseif key == "f11" then
-    local isFull = love.window.getFullscreen()
-    love.window.setFullscreen(not isFull)
-  end
-end
