@@ -18,9 +18,8 @@ end
 
 function love.draw()
 	love.graphics.push()
-	love.graphics.scale(scale, scale)
 	if map and map.draw then
-		map:draw()
+		map:draw(0, 0, scale, scale)
 	end
 	love.graphics.pop()
 end
