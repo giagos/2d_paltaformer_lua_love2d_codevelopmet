@@ -22,7 +22,7 @@ function love.update(dt)
 end
 
 function love.draw()
-	--love.graphics.draw(background)
+	love.graphics.draw(background)
 	love.graphics.push()
 	if map and map.draw then
 		map:draw(0, 0, scale, scale)
