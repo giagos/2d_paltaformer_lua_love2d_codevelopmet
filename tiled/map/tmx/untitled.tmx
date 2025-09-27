@@ -3,7 +3,9 @@
  <editorsettings>
   <export target="../1.lua" format="lua"/>
  </editorsettings>
- <tileset firstgid="1" source="../tsx/placeholder.tsx"/>
+ <tileset firstgid="1" name="placeholder" tilewidth="16" tileheight="16" tilecount="4" columns="2">
+  <image source="../../../asets/sprites/placeholder_box_set.png" width="32" height="32"/>
+ </tileset>
  <layer id="1" name="Tile Layer 1" width="40" height="23">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
