@@ -3,6 +3,10 @@
 
 Minimal LÖVE 2D starter with Tiled map loading via STI.
 
+## Preview
+
+![Demo gameplay](./love_kvWX7bSqY6.gif)
+
 ## Run
 
 1. Install LÖVE 11.x from https://love2d.org/
@@ -29,4 +33,5 @@ After adding STI, the project will load and draw `tiled/map/1.lua` automatically
 - F2: Toggle collider debug overlay
 - R: Reset player to (64, 64)
 - ESC: Quit
+- Mouse: Click and drag the red chain anchor to move it
 
