@@ -14,11 +14,13 @@
 -- STI + Box2D (no Bump)
 local sti = require("sti")
 local Player = require("player")
+local Ball = require("ball")
 local DebugDraw = require("debugdraw")
 
 local map
 local scale = 2
 local player
+local ball
 local showColliders = false
 
 function love.load()
@@ -28,8 +30,8 @@ function love.load()
 	-- Load the Tiled map via STI, enabling its Box2D plugin
 	map = sti("tiled/map/1.lua", { "box2d" })
 
-	-- Create the Box2D world (no gravity per your preference)
-	world = love.physics.newWorld(0, 0)
+	-- Create the Box2D world with gravity so dynamic balls fall and bounce
+	world = love.physics.newWorld(0, 1200)
 	-- Forward Box2D contacts to our handlers
 	world:setCallbacks(beginContact, endContact)
 
@@ -45,6 +47,9 @@ function love.load()
 	-- Create and load player physics body/fixture at (64,64) in pixels
 	player = Player
 	player:load(world, 64, 64)
+
+	-- Create a ball so you can see it collide with the player
+	ball = Ball.new(world, 120, 64, 10, { restitution = 0.6 })
 end
 
 function love.update(dt)
@@ -61,6 +66,9 @@ function love.update(dt)
 	if player and player.update then
 		player:update(dt)
 	end
+	if ball and ball.update then
+		ball:update(dt)
+	end
 end
 
 function love.draw()
@@ -72,6 +80,9 @@ function love.draw()
 	end
 	-- Draw player and debug overlay in the same visual scale as the map
 	love.graphics.scale(scale, scale)
+	if ball and ball.draw then
+		ball:draw()
+	end
 	if player and player.draw then
 		player:draw()
 	end

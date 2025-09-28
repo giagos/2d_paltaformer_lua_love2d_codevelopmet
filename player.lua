@@ -17,7 +17,7 @@ function Player:load(world, x, y)
    self.yVel = 0
    self.maxSpeed = 200
    self.acceleration = 4000
-   self.friction = 3500
+   self.friction = 300
    self.gravity = 1500
    self.jumpAmount = -500
    self.grounded = false
@@ -29,6 +29,10 @@ function Player:load(world, x, y)
    -- Body at center (Box2D origin at shape center)
    self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, "dynamic")
    self.physics.body:setFixedRotation(true)
+   -- World gravity is enabled for balls; keep player independent by disabling world gravity influence
+   if self.physics.body.setGravityScale then
+      self.physics.body:setGravityScale(0)
+   end
    -- Rectangle shape (full width/height)
    self.physics.shape = love.physics.newRectangleShape(self.width / meter, self.height / meter)
    self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
