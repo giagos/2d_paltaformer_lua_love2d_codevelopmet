@@ -4,6 +4,13 @@
 -- - Handles left/right movement, friction, gravity, and jumping
 -- - Detects grounding via world contact callbacks using collision normals
 local Player = {}
+local spritesheet, animation_idle, animation_walk, animation_jump, animation_fall
+local drawscale = 1
+local xdirection = "no"
+local ydirection = "no"
+
+
+local anim8 = require("anim8")
 
 function Player:load(world, x, y)
    -- Dimensions and spawn
@@ -15,12 +22,15 @@ function Player:load(world, x, y)
    -- Kinematics and tuning
    self.xVel = 0
    self.yVel = 0
-   self.maxSpeed = 200
-   self.acceleration = 4000
+   self.maxSpeed = 100
+   self.acceleration = 2000
    self.friction = 3400
    self.gravity = 1500
-   self.jumpAmount = -350
+   self.jumpAmount = -340
    self.grounded = false
+
+   --Animations
+   self:loadAssets()
 
    self.color = {0.9, 0.3, 0.3, 1}
 
@@ -44,12 +54,27 @@ function Player:load(world, x, y)
    self.physics.body:resetMassData()
 end
 
+function Player:loadAssets()
+   spritesheet = love.graphics.newImage('asets/sprites/spritesheet_player_walk.png')
+   local grid = anim8.newGrid(16, 16, spritesheet:getWidth(), spritesheet:getHeight())
+   animation_idle = anim8.newAnimation(grid('1-2',1), 0.5)
+   animation_walk = anim8.newAnimation(grid('3-8',1), 0.09)
+   animation_jump = anim8.newAnimation(grid('9-10',1), 0.1)
+   animation_fall = anim8.newAnimation(grid('11-12',1), 0.1)
+
+end
+
 function Player:update(dt)
    -- Apply control + physics integration order:
    -- 1) movement/friction (horizontal), 2) gravity (vertical), 3) sync to body
    self:move(dt)
    self:applyGravity(dt)
    self:syncPhysics()
+   self:setDirection()
+   animation_idle:update(dt)
+   animation_walk:update(dt)
+   animation_jump:update(dt)
+   animation_fall:update(dt)
 end
 
 function Player:syncPhysics(dt)
@@ -130,11 +155,43 @@ function Player:land(collision)
    self.grounded = true
 end
 
+function Player:setDirection()
+   if self.xVel == 0 and self.yVel == 0 then
+      xdirection = "no"
+      ydirection = "no"
+   end
+   if self.xVel > 0 then 
+      xdirection = "right"
+      drawscale = 1
+   elseif self.xVel < 0 then
+      xdirection = "left"
+      drawscale = -1
+   end
+   if self.yVel < 0 and self.grounded == false then
+      ydirection = "up"
+   elseif self.yVel > 0 and self.grounded == false then
+      ydirection = "down"
+   end
+end
+
 function Player:draw()
    -- Draw centered rectangle as placeholder player sprite
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
-    love.graphics.setColor(1,1,1,1)
+   --love.graphics.setColor(self.color)
+   --love.graphics.rectangle("fill", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
+   --love.graphics.setColor(1,1,1,1)
+   if xdirection=="no" and ydirection=="no" then
+      animation_idle:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2) 
+   end
+   if self.grounded == true then 
+      if xdirection == "right" or xdirection == "left" then
+         animation_walk:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+      end
+   end
+   if ydirection == "up" and self.grounded == false then
+      animation_jump:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+   elseif ydirection == "down" and self.grounded == false then
+      animation_fall:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+   end
 end
 
 return Player

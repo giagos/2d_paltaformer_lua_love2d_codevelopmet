@@ -29,6 +29,8 @@ local chain
 local playerTextBox
 local showColliders = false
 
+love.graphics.setDefaultFilter("nearest","nearest")
+
 function love.load()
 	-- Physics setup: 1 meter = 1 pixel so STI's pixel-based colliders match Box2D bodies
 	love.physics.setMeter(1)
