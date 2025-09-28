@@ -17,6 +17,7 @@ local Player = require("player")
 local Ball = require("ball")
 local Box = require("box")
 local Chain = require("chain")
+local PlayerTextBox = require("player_text_box")
 local DebugDraw = require("debugdraw")
 
 local map
@@ -25,11 +26,18 @@ local player
 local balls = {}
 local boxes = {}
 local chain
+local playerTextBox
 local showColliders = false
 
 function love.load()
 	-- Physics setup: 1 meter = 1 pixel so STI's pixel-based colliders match Box2D bodies
 	love.physics.setMeter(1)
+
+	-- Optional: set a custom font here (graphics is available now)
+	--pcall(function()
+		--local f = love.graphics.newFont("OneTimeNbpRegular-YJyO.ttf", 12)
+		--love.graphics.setFont(f)
+	--end)
 
 	-- Load the Tiled map via STI, enabling its Box2D plugin
 	map = sti("tiled/map/1.lua", { "box2d" })
@@ -51,6 +59,9 @@ function love.load()
 	-- Create and load player physics body/fixture at (64,64) in pixels
 	player = Player
 	player:load(world, 64, 64)
+
+	-- Text box bound to player
+	playerTextBox = PlayerTextBox.new(player)
 
 	-- Create balls so you can see them collide with the player/boxes
 	table.insert(balls, Ball.new(world, 140, 40, 10, { restitution = 0.6, friction = 0.4 }))
@@ -85,6 +96,7 @@ function love.update(dt)
 	for _, b in ipairs(balls) do if b.update then b:update(dt) end end
 	for _, b in ipairs(boxes) do if b.update then b:update(dt) end end
 	if chain and chain.update then chain:update(dt) end
+	if playerTextBox and playerTextBox.update then playerTextBox:update(dt) end
 end
 
 function love.draw()
@@ -105,6 +117,7 @@ function love.draw()
 	if showColliders then
 		DebugDraw.drawWorldTransparent(world)
 	end
+	if playerTextBox and playerTextBox.draw then playerTextBox:draw() end
 	love.graphics.pop()
 end
 
@@ -126,6 +139,11 @@ function love.keypressed(key)
 	-- Jump input (W/Up) handled inside player
 	if player and player.jump then
 		player:jump(key)
+	end
+
+	-- Demo: Press T to show a text box over the player 
+	if key == 't' and playerTextBox and playerTextBox.show then
+		playerTextBox:show("TEST 123 hi !", 30)
 	end
 end
 
