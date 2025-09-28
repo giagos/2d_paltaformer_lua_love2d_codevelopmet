@@ -9,8 +9,8 @@ return {
   height = 23,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 3,
-  nextobjectid = 16,
+  nextlayerid = 4,
+  nextobjectid = 17,
   properties = {},
   tilesets = {
     {
@@ -231,6 +231,37 @@ return {
           y = 0.833333,
           width = 20.5,
           height = 284.167,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 3,
+      name = "sensor",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {
+        ["sensor1"] = true
+      },
+      objects = {
+        {
+          id = 16,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 252,
+          y = 238.5,
+          width = 66.5,
+          height = 30.5,
           rotation = 0,
           visible = true,
           properties = {}

@@ -105,6 +105,12 @@ function Player:jump(key)
    end
 end
 
+-- Optional input entry point: call from love.keypressed in main
+function Player:keypressed(key)
+   -- Currently only uses jump; expand here for more player-specific inputs
+   self:jump(key)
+end
+
 -- Ground detection via contact normals
 function Player:beginContact(a, b, collision)
    if self.grounded then return end
