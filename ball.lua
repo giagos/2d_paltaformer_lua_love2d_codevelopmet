@@ -72,8 +72,29 @@ function Ball:setVelocity(vx, vy)
 end
 
 function Ball:draw()
+  -- Draw at body angle so the cross indicates rotation
+  love.graphics.push()
+  love.graphics.translate(self.x, self.y)
+  if self.physics and self.physics.body then
+    love.graphics.rotate(self.physics.body:getAngle())
+  end
+
+  -- Filled circle
   love.graphics.setColor(self.color)
-  love.graphics.circle('fill', self.x, self.y, self.radius)
+  love.graphics.circle('fill', 0, 0, self.radius)
+
+  -- Outline for clarity
+  love.graphics.setColor(0, 0, 0, 0.9)
+  love.graphics.setLineWidth(1)
+  love.graphics.circle('line', 0, 0, self.radius)
+
+  -- Cross (horizontal and vertical) centered, rotates with the ball
+  love.graphics.setColor(1, 1, 1, 0.95)
+  local r = self.radius
+  love.graphics.line(-r, 0, r, 0)
+  love.graphics.line(0, -r, 0, r)
+
+  love.graphics.pop()
   love.graphics.setColor(1, 1, 1, 1)
 end
 
