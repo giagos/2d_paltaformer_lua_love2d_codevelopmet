@@ -20,4 +20,6 @@ function love.conf(t)
 
   -- Modules: keep defaults (all on) for simplicity in a starter
   -- You can disable here later for perf/size if needed
+  -- font
+  t.font = love.graphics.newFont("D:/2d_paltaformer_lua_love2d_codevelopmet/OneTimeNbpRegular-YJyO.ttf")
 end
