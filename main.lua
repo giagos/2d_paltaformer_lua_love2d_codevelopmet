@@ -15,12 +15,14 @@
 local sti = require("sti")
 local Player = require("player")
 local Ball = require("ball")
+local Box = require("box")
 local DebugDraw = require("debugdraw")
 
 local map
 local scale = 2
 local player
 local ball
+local boxes = {}
 local showColliders = false
 
 function love.load()
@@ -49,7 +51,13 @@ function love.load()
 	player:load(world, 64, 64)
 
 	-- Create a ball so you can see it collide with the player
-	ball = Ball.new(world, 120, 64, 10, { restitution = 0.6 })
+	ball = Ball.new(world, 140, 40, 10, { restitution = 0.6, friction = 0.4 })
+
+	-- Create a few boxes beside the ball
+	boxes[1] = Box.new(world, 180, 40, 24, 24, { type = 'dynamic', restitution = 0.2 })
+	boxes[2] = Box.new(world, 210, 40, 24, 24, { type = 'dynamic', restitution = 0.2 })
+	-- A static ground block (if your map lacks solid at that height)
+	-- boxes[3] = Box.new(world, 160, 120, 120, 16, { type = 'static' })
 end
 
 function love.update(dt)
@@ -69,6 +77,7 @@ function love.update(dt)
 	if ball and ball.update then
 		ball:update(dt)
 	end
+	for _, b in ipairs(boxes) do if b.update then b:update(dt) end end
 end
 
 function love.draw()
@@ -83,6 +92,7 @@ function love.draw()
 	if ball and ball.draw then
 		ball:draw()
 	end
+	for _, b in ipairs(boxes) do if b.draw then b:draw() end end
 	if player and player.draw then
 		player:draw()
 	end
