@@ -16,7 +16,7 @@ function Player:load(world, x, y)
    -- Dimensions and spawn
    self.x = 100
    self.y = 0
-   self.width = 16
+   self.width = 8
    self.height = 16
 
    -- Kinematics and tuning
@@ -173,10 +173,12 @@ function Player:setDirection()
       xdirection = "left"
       drawscale = -1
    end
-   if self.yVel < 0 and self.grounded == false then
+   if self.yVel < -50 and self.grounded == false then
       ydirection = "up"
-   elseif self.yVel > 0 and self.grounded == false then
+   elseif self.yVel > 50 and self.grounded == false then
       ydirection = "down"
+   else
+      ydirection = "no"
    end
 end
 
@@ -186,17 +188,19 @@ function Player:draw()
    --love.graphics.rectangle("fill", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
    --love.graphics.setColor(1,1,1,1)
    if xdirection=="no" and ydirection=="no" then
-      animation_idle:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2) 
+      animation_idle:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width, self.height/2) 
    end
    if self.grounded == true then 
       if xdirection == "right" or xdirection == "left" then
-         animation_walk:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+         animation_walk:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width, self.height/2)
       end
    end
    if ydirection == "up" and self.grounded == false then
-      animation_jump:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+      animation_jump:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width, self.height/2)
    elseif ydirection == "down" and self.grounded == false then
-      animation_fall:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width/2, self.height/2)
+      animation_fall:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width, self.height/2)
+   elseif ydirection == "no" and self.grounded == false then
+      animation_idle:draw(spritesheet, self.x, self.y, 0, drawscale, 1, self.width, self.height/2)
    end
 end
 
