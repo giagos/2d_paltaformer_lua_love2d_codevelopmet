@@ -95,28 +95,31 @@ function PlayerTextBox:draw()
   local boxX = math.floor(x - boxW / 2)
   local boxY = math.floor(y - boxH)
 
-  -- Draw opaque black box
+  -- Draw opaque black box (square corners)
   love.graphics.setColor(self.backgroundColor)
-  love.graphics.rectangle('fill', boxX, boxY, boxW, boxH, 3, 3)
+  love.graphics.rectangle('fill', boxX, boxY, boxW, boxH)
 
-  -- High-contrast border for clarity
+  -- High-contrast border for clarity (square corners)
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.rectangle('line', boxX, boxY, boxW, boxH, 3, 3)
+  love.graphics.rectangle('line', boxX, boxY, boxW, boxH)
 
-  -- Pointer triangle toward the player (box is always above the player)
+  -- Small pointer triangle under the box (does not touch the player)
   local boxCenterX = boxX + boxW/2
   local by = boxY + boxH
+  local triHalf = 3  -- half width of triangle base (smaller = slimmer)
+  local triH = 4     -- triangle height
+  local gap = 4      -- visual gap between triangle tip and player head (indirectly, since triangle is fixed under box)
   love.graphics.setColor(self.backgroundColor)
   love.graphics.polygon('fill',
-    boxCenterX - 6, by,
-    boxCenterX + 6, by,
-    px, (py - pHalfH - 2)
+    boxCenterX - triHalf, by,
+    boxCenterX + triHalf, by,
+    boxCenterX, by + triH
   )
   love.graphics.setColor(1,1,1,1)
   love.graphics.polygon('line',
-    boxCenterX - 6, by,
-    boxCenterX + 6, by,
-    px, (py - pHalfH - 2)
+    boxCenterX - triHalf, by,
+    boxCenterX + triHalf, by,
+    boxCenterX, by + triH
   )
 
   -- Draw white text

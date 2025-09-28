@@ -28,6 +28,7 @@ local boxes = {}
 local chain
 local playerTextBox
 local showColliders = false
+local showSensor1Overlay = false
 
 love.graphics.setDefaultFilter("nearest","nearest")
 
@@ -49,11 +50,67 @@ function love.load()
 	-- Forward Box2D contacts to our handlers
 	world:setCallbacks(beginContact, endContact)
 
+	-- Ensure the 'sensor' object layer generates Box2D fixtures even if Tiled lacked collidable=true
+	if map and map.layers then
+		for _, layer in ipairs(map.layers) do
+			if layer.type == 'objectgroup' and layer.name == 'sensor' then
+				layer.properties = layer.properties or {}
+				if layer.properties.collidable ~= true then
+					layer.properties.collidable = true
+					print("[STI] Enabled collidable=true for 'sensor' layer at runtime")
+				end
+				-- Ensure every object in this layer is flagged collidable so STI will create fixtures
+				if layer.objects then
+					for _, obj in ipairs(layer.objects) do
+						obj.properties = obj.properties or {}
+						if obj.properties.collidable ~= true then
+							obj.properties.collidable = true
+						end
+					end
+				end
+			end
+		end
+	end
+
 	-- Ask STI to create Box2D fixtures from collidable layers/objects in the map
 	map:box2d_init(world)
 
+	-- Merge layer-level properties into each STI fixture's userData so layer properties like
+	-- sensor1=true are visible during contact callbacks. Also, ONLY inherit sensor=true
+	-- from a layer when the fixture is part of a sensor trigger (sensor1=true) to avoid
+	-- accidentally turning solid ground into sensors.
+	if map and map.box2d_collision then
+		local merged = 0
+		local sensors = 0
+		for _, c in ipairs(map.box2d_collision) do
+			if c and c.fixture then
+				local ud = c.fixture:getUserData() or {}
+				local props = {}
+				if type(ud.properties) == 'table' then
+					for k,v in pairs(ud.properties) do props[k] = v end
+				end
+				local layerProps = (c.object and c.object.layer and c.object.layer.properties) or nil
+				if type(layerProps) == 'table' then
+					for k,v in pairs(layerProps) do if props[k] == nil then props[k] = v end end
+					-- If this fixture is marked as a sensor trigger (sensor1), make it a sensor
+					-- so the player can pass through even if no explicit 'sensor' property exists.
+					if props.sensor1 == true then
+						c.fixture:setSensor(true)
+					end
+				end
+				ud.properties = props
+				c.fixture:setUserData(ud)
+				if props and props.sensor1 then sensors = sensors + 1 end
+				merged = merged + 1
+			end
+		end
+	print(string.format("[STI] Fixtures: %d, sensor1 fixtures: %d", merged, sensors))
+	end
+
 	-- If the map has a visible "solid" layer, hide it so we only draw tiles, not debug
 	if map.layers.solid then map.layers.solid.visible = false end
+	-- Also hide the 'sensor' object layer so its rectangles are not drawn by STI
+	if map.layers.sensor then map.layers.sensor.visible = false end
 
 	-- Simple background image
 	background = love.graphics.newImage("asets/sprites/background.png")
@@ -119,15 +176,20 @@ function love.draw()
 	if showColliders then
 		DebugDraw.drawWorldTransparent(world)
 	end
+	-- Sensor1 overlay: draw outlines for fixtures marked with sensor1
+	if showSensor1Overlay and map and map.box2d_collision then
+		DebugDraw.drawSensor1Overlay(map)
+	end
 	if playerTextBox and playerTextBox.draw then playerTextBox:draw() end
 	love.graphics.pop()
+
 end
 
-function love.keypressed(key)
+function love.keypressed(key, scancode, isrepeat)
 	if key == "f2" then
 		-- Toggle transparent collider overlay (player in red, map in green)
 		showColliders = not showColliders
-		print("Colliders visible:", showColliders)
+		print(string.format('[F2] Colliders %s', showColliders and 'ON' or 'OFF'))
 	elseif key == "r" then
 		-- Reset player position for testing
 		local meter = love.physics.getMeter()
@@ -138,14 +200,18 @@ function love.keypressed(key)
 	elseif key == "escape" then
 		love.event.quit()
 	end
-	-- Jump input (W/Up) handled inside player
-	if player and player.jump then
-		player:jump(key)
+	-- Text box demo disabled in minimal mode
+
+	-- F3: toggle sensor1 overlay (like F2 but only for sensor1 fixtures)
+	if key == 'f3' or scancode == 'f3' then
+		showSensor1Overlay = not showSensor1Overlay
+		local state = showSensor1Overlay and 'ON' or 'OFF'
+		print('[F3] Sensor1 overlay ' .. state)
 	end
 
-	-- Demo: Press T to show a text box over the player 
-	if key == 't' and playerTextBox and playerTextBox.show then
-		playerTextBox:show("TEST 123 hi !", 30)
+	-- Forward keypresses to player (jump etc.)
+	if player and player.keypressed then
+		player:keypressed(key)
 	end
 end
 
@@ -177,11 +243,71 @@ function beginContact(a, b, collision)
 	if player and player.beginContact then
 		player:beginContact(a, b, collision)
 	end
+
+	-- Detect Tiled sensors with custom property sensor1=true
+	local function isPlayerFixture(fix)
+		if not fix then return false end
+		-- Prefer explicit tag check from our player fixture
+		local ud = fix:getUserData()
+		if type(ud) == 'table' and ud.tag == 'player' then return true end
+		-- Fallback: compare to player's fixture if available
+		return player and player.physics and player.physics.fixture == fix
+	end
+	local function getProps(fix)
+		if not fix then return nil end
+		local ud = fix:getUserData()
+		if type(ud) ~= 'table' then return nil end
+		-- Object-level properties
+		if ud.properties then return ud.properties end
+		-- Fallback: some setups rely on layer-level properties; try to read them
+		if ud.object and ud.object.layer and ud.object.layer.properties then
+			return ud.object.layer.properties
+		end
+		return nil
+	end
+
+	if isPlayerFixture(a) then
+		local props = getProps(b)
+		if props and props.sensor1 then
+			if playerTextBox and playerTextBox.show then
+				playerTextBox:show("Sensor1 hit!", 2)
+			end
+			print("[Sensor1] ENTER via fixture b")
+		end
+	elseif isPlayerFixture(b) then
+		local props = getProps(a)
+		if props and props.sensor1 then
+			if playerTextBox and playerTextBox.show then
+				playerTextBox:show("Sensor1 hit!", 2)
+			end
+			print("[Sensor1] ENTER via fixture a")
+		end
+	end
 end
 
 function endContact(a, b, collision)
 	if player and player.endContact then
 		player:endContact(a, b, collision)
+	end
+
+	-- Optional debug log for exits
+	local function isPlayerFixture(fix)
+		if not fix then return false end
+		local ud = fix:getUserData()
+		return type(ud) == 'table' and ud.tag == 'player'
+	end
+	local function getProps(fix)
+		if not fix then return nil end
+		local ud = fix:getUserData()
+		if type(ud) == 'table' and ud.properties then return ud.properties end
+		return nil
+	end
+	if isPlayerFixture(a) then
+		local props = getProps(b)
+		if props and props.sensor1 then print("[Sensor1] EXIT via fixture b") end
+	elseif isPlayerFixture(b) then
+		local props = getProps(a)
+		if props and props.sensor1 then print("[Sensor1] EXIT via fixture a") end
 	end
 end
 
