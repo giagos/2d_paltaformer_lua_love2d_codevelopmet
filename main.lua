@@ -19,6 +19,7 @@ local Box = require("box")
 local Chain = require("chain")
 local PlayerTextBox = require("player_text_box")
 local DebugMenu = require("debugmenu")
+local Sensors = require("sensor_handler")
 
 local map
 local scale = 2
@@ -49,14 +50,14 @@ function love.load()
 	-- Forward Box2D contacts to our handlers
 	world:setCallbacks(beginContact, endContact)
 
-	-- Ensure the 'sensor' object layer generates Box2D fixtures even if Tiled lacked collidable=true
+	-- Ensure the 'sensor' or 'sensors' object layer generates Box2D fixtures even if Tiled lacked collidable=true
 	if map and map.layers then
 		for _, layer in ipairs(map.layers) do
-			if layer.type == 'objectgroup' and layer.name == 'sensor' then
+			if layer.type == 'objectgroup' and (layer.name == 'sensor' or layer.name == 'sensors') then
 				layer.properties = layer.properties or {}
 				if layer.properties.collidable ~= true then
 					layer.properties.collidable = true
-					print("[STI] Enabled collidable=true for 'sensor' layer at runtime")
+					print("[STI] Enabled collidable=true for '" .. layer.name .. "' layer at runtime")
 				end
 				-- Ensure every object in this layer is flagged collidable so STI will create fixtures
 				if layer.objects then
@@ -108,8 +109,9 @@ function love.load()
 
 	-- If the map has a visible "solid" layer, hide it so we only draw tiles, not debug
 	if map.layers.solid then map.layers.solid.visible = false end
-	-- Also hide the 'sensor' object layer so its rectangles are not drawn by STI
+	-- Also hide the 'sensor'/'sensors' object layer so its rectangles are not drawn by STI
 	if map.layers.sensor then map.layers.sensor.visible = false end
+	if map.layers.sensors then map.layers.sensors.visible = false end
 
 	-- Simple background image
 	background = love.graphics.newImage("asets/sprites/background.png")
@@ -120,6 +122,26 @@ function love.load()
 
 	-- Init debug menu now that world, map, and player exist
 	DebugMenu.init(world, map, player)
+
+	-- Init Sensors handler (named sensors in Tiled: sensor1, sensor2, ...)
+	Sensors.init(world, map, function()
+		return player and player.physics and player.physics.fixture or nil
+	end)
+	-- Example callbacks: show text when entering sensor1/sensor2
+	Sensors.onEnter.sensor1 = function()
+		if playerTextBox and playerTextBox.show then playerTextBox:show("Sensor1 hit!", 2) end
+		print("[Sensor1] ENTER")
+	end
+	Sensors.onExit.sensor1 = function()
+		print("[Sensor1] EXIT")
+	end
+	Sensors.onEnter.sensor2 = function()
+		if playerTextBox and playerTextBox.show then playerTextBox:show("Sensor2 hit!", 2) end
+		print("[Sensor2] ENTER")
+	end
+	Sensors.onExit.sensor2 = function()
+		print("[Sensor2] EXIT")
+	end
 
 	-- Text box bound to player
 	playerTextBox = PlayerTextBox.new(player)
@@ -236,63 +258,8 @@ function beginContact(a, b, collision)
 		player:beginContact(a, b, collision)
 	end
 
-	-- Detect Tiled sensors with custom property sensor1=true
-	local function isPlayerFixture(fix)
-		if not fix then return false end
-		-- Prefer explicit tag check from our player fixture
-		local ud = fix:getUserData()
-		if type(ud) == 'table' and ud.tag == 'player' then return true end
-		-- Fallback: compare to player's fixture if available
-		return player and player.physics and player.physics.fixture == fix
-	end
-	local function getProps(fix)
-		if not fix then return nil end
-		local ud = fix:getUserData()
-		if type(ud) ~= 'table' then return nil end
-		-- Object-level properties
-		if ud.properties then return ud.properties end
-		-- Fallback: some setups rely on layer-level properties; try to read them
-		if ud.object and ud.object.layer and ud.object.layer.properties then
-			return ud.object.layer.properties
-		end
-		return nil
-	end
-
-	if isPlayerFixture(a) then
-		local props = getProps(b)
-		if props and props.sensor1 then
-			if playerTextBox and playerTextBox.show then
-				playerTextBox:show("Sensor1 hit!", 2)
-			end
-			print("[Sensor1] ENTER via fixture b")
-		end
-	elseif isPlayerFixture(b) then
-		local props = getProps(a)
-		if props and props.sensor1 then
-			if playerTextBox and playerTextBox.show then
-				playerTextBox:show("Sensor1 hit!", 2)
-			end
-			print("[Sensor1] ENTER via fixture a")
-		end
-	end
-
-	if isPlayerFixture(a) then
-		local props = getProps(b)
-		if props and props.sensor2 then
-			if playerTextBox and playerTextBox.show then
-				playerTextBox:show("Sensor2 hit!", 2)
-			end
-			print("[Sensor2] ENTER via fixture b")
-		end
-	elseif isPlayerFixture(b) then
-		local props = getProps(a)
-		if props and props.sensor2 then
-			if playerTextBox and playerTextBox.show then
-				playerTextBox:show("Sensor2 hit!", 2)
-			end
-			print("[Sensor2] ENTER via fixture a")
-		end
-	end
+	-- Delegate sensor contacts to handler
+	Sensors.beginContact(a, b)
 end
 
 function endContact(a, b, collision)
@@ -300,24 +267,6 @@ function endContact(a, b, collision)
 		player:endContact(a, b, collision)
 	end
 
-	-- Optional debug log for exits
-	local function isPlayerFixture(fix)
-		if not fix then return false end
-		local ud = fix:getUserData()
-		return type(ud) == 'table' and ud.tag == 'player'
-	end
-	local function getProps(fix)
-		if not fix then return nil end
-		local ud = fix:getUserData()
-		if type(ud) == 'table' and ud.properties then return ud.properties end
-		return nil
-	end
-	if isPlayerFixture(a) then
-		local props = getProps(b)
-		if props and props.sensor1 then print("[Sensor1] EXIT via fixture b") end
-	elseif isPlayerFixture(b) then
-		local props = getProps(a)
-		if props and props.sensor1 then print("[Sensor1] EXIT via fixture a") end
-	end
+	Sensors.endContact(a, b)
 end
 
