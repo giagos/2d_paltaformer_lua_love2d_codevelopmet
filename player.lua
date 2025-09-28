@@ -17,11 +17,7 @@ function Player:load(world, x, y)
    self.yVel = 0
    self.maxSpeed = 200
    self.acceleration = 4000
-<<<<<<< Updated upstream
    self.friction = 300
-=======
-   self.friction = 3400
->>>>>>> Stashed changes
    self.gravity = 1500
    self.jumpAmount = -350
    self.grounded = false
