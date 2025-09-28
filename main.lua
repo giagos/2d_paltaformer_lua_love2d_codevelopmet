@@ -18,7 +18,7 @@ local Ball = require("ball")
 local Box = require("box")
 local Chain = require("chain")
 local PlayerTextBox = require("player_text_box")
-local DebugDraw = require("debugdraw")
+local DebugMenu = require("debugmenu")
 
 local map
 local scale = 2
@@ -27,8 +27,7 @@ local balls = {}
 local boxes = {}
 local chain
 local playerTextBox
-local showColliders = false
-local showSensor1Overlay = false
+
 
 love.graphics.setDefaultFilter("nearest","nearest")
 
@@ -119,6 +118,9 @@ function love.load()
 	player = Player
 	player:load(world, 64, 64)
 
+	-- Init debug menu now that world, map, and player exist
+	DebugMenu.init(world, map, player)
+
 	-- Text box bound to player
 	playerTextBox = PlayerTextBox.new(player)
 
@@ -173,24 +175,21 @@ function love.draw()
 	if player and player.draw then
 		player:draw()
 	end
-	if showColliders then
-		DebugDraw.drawWorldTransparent(world)
-	end
-	-- Sensor1 overlay: draw outlines for fixtures marked with sensor1
-	if showSensor1Overlay and map and map.box2d_collision then
-		DebugDraw.drawSensor1Overlay(map)
-	end
+	-- World-space debug overlays (F2/F3)
+	DebugMenu.drawWorld()
 	if playerTextBox and playerTextBox.draw then playerTextBox:draw() end
 	love.graphics.pop()
+
+	-- Screen-space overlays (F4)
+	DebugMenu.drawScreen()
 
 end
 
 function love.keypressed(key, scancode, isrepeat)
-	if key == "f2" then
-		-- Toggle transparent collider overlay (player in red, map in green)
-		showColliders = not showColliders
-		print(string.format('[F2] Colliders %s', showColliders and 'ON' or 'OFF'))
-	elseif key == "r" then
+	-- Delegate debug keys first so F2/F3/F4 are handled centrally
+	DebugMenu.keypressed(key)
+
+	if key == "r" then
 		-- Reset player position for testing
 		local meter = love.physics.getMeter()
 		if player and player.physics and player.physics.body then
@@ -201,13 +200,6 @@ function love.keypressed(key, scancode, isrepeat)
 		love.event.quit()
 	end
 	-- Text box demo disabled in minimal mode
-
-	-- F3: toggle sensor1 overlay (like F2 but only for sensor1 fixtures)
-	if key == 'f3' or scancode == 'f3' then
-		showSensor1Overlay = not showSensor1Overlay
-		local state = showSensor1Overlay and 'ON' or 'OFF'
-		print('[F3] Sensor1 overlay ' .. state)
-	end
 
 	-- Forward keypresses to player (jump etc.)
 	if player and player.keypressed then
