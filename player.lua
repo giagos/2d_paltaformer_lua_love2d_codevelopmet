@@ -29,6 +29,7 @@ function Player:load(world, x, y)
    self.gravity = 1500
    self.jumpAmount = -340
    self.grounded = false
+   self.groundContacts = 0
 
    --Animations
    self:loadAssets()
@@ -53,6 +54,19 @@ function Player:load(world, x, y)
    self.physics.fixture:setSensor(false)
    self.physics.fixture:setUserData({ tag = "player" })
    self.physics.body:resetMassData()
+
+   -- Foot sensor: a small sensor fixture at the feet that overlaps slightly into ground
+   do
+      local meter = love.physics.getMeter()
+      local footWidth = self.width * 0.8
+      local footHeight = 3
+      -- Offset so it sits at the very bottom, extending ~1px into ground
+      local oy = (self.height/2) - (footHeight/2) + 1
+      self.physics.footShape = love.physics.newRectangleShape(0, oy / meter, footWidth / meter, footHeight / meter)
+      self.physics.footFixture = love.physics.newFixture(self.physics.body, self.physics.footShape)
+      self.physics.footFixture:setSensor(true)
+      self.physics.footFixture:setUserData({ tag = "player_foot" })
+   end
 end
 
 function Player:loadAssets()
@@ -139,6 +153,16 @@ end
 
 -- Ground detection via contact normals
 function Player:beginContact(a, b, collision)
+   -- Foot sensor based grounding
+   if self.physics and self.physics.footFixture and (a == self.physics.footFixture or b == self.physics.footFixture) then
+      local other = (a == self.physics.footFixture) and b or a
+      if other and not other:isSensor() then
+         self.groundContacts = self.groundContacts + 1
+         self.grounded = true
+         self.yVel = 0
+      end
+      return
+   end
    if self.grounded then return end
    local nx, ny = collision:getNormal()
    if a == self.physics.fixture then
@@ -157,6 +181,17 @@ function Player:beginContact(a, b, collision)
 end
 
 function Player:endContact(a, b, collision)
+   -- Foot sensor unground when all contacts end
+   if self.physics and self.physics.footFixture and (a == self.physics.footFixture or b == self.physics.footFixture) then
+      local other = (a == self.physics.footFixture) and b or a
+      if other and not other:isSensor() then
+         self.groundContacts = math.max(0, self.groundContacts - 1)
+         if self.groundContacts == 0 then
+            self.grounded = false
+         end
+      end
+      return
+   end
    if a == self.physics.fixture or b == self.physics.fixture then
       if self.currentGroundCollision == collision then
          self.grounded = false
