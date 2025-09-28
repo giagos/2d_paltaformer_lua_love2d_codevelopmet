@@ -275,6 +275,24 @@ function beginContact(a, b, collision)
 			print("[Sensor1] ENTER via fixture a")
 		end
 	end
+
+	if isPlayerFixture(a) then
+		local props = getProps(b)
+		if props and props.sensor2 then
+			if playerTextBox and playerTextBox.show then
+				playerTextBox:show("Sensor2 hit!", 2)
+			end
+			print("[Sensor2] ENTER via fixture b")
+		end
+	elseif isPlayerFixture(b) then
+		local props = getProps(a)
+		if props and props.sensor2 then
+			if playerTextBox and playerTextBox.show then
+				playerTextBox:show("Sensor2 hit!", 2)
+			end
+			print("[Sensor2] ENTER via fixture a")
+		end
+	end
 end
 
 function endContact(a, b, collision)
