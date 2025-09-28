@@ -166,12 +166,16 @@ function Player:beginContact(a, b, collision)
    if self.grounded then return end
    local nx, ny = collision:getNormal()
    if a == self.physics.fixture then
+      -- Ignore sensors (e.g., sensor1 triggers) for head/ground logic
+      if b and b.isSensor and b:isSensor() then return end
       if ny > 0 then 
          self:land(collision) 
       elseif ny < 0 then
          self.yVel = 0
       end
    elseif b == self.physics.fixture then
+      -- Ignore sensors (e.g., sensor1 triggers) for head/ground logic
+      if a and a.isSensor and a:isSensor() then return end
       if ny < 0 then 
          self:land(collision)
       elseif ny > 0 then
