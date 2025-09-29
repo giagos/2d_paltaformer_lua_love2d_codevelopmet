@@ -20,8 +20,8 @@ function Box:load(world, x, y, w, h, opts)
   opts = opts or {}
   self.x = x or 100
   self.y = y or 100
-  self.w = w or 24
-  self.h = h or 24
+  self.w = w or 16
+  self.h = h or 16
   self.color = opts.color or { 0.3, 0.9, 0.4, 1 }
 
   local meter = love.physics.getMeter()

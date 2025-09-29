@@ -153,7 +153,7 @@ function love.load()
 	table.insert(balls, Ball.new(world, 120, 28, 8,  { restitution = 0.7, friction = 0.5, color = {0.4, 0.8, 1.0, 1} }))
 
 	-- Create a few boxes beside the ball
-	boxes[1] = Box.new(world, 180, 40, 24, 24, { type = 'dynamic', restitution = 0.2 })
+	boxes[1] = Box.new(world, 180, 40, 16, 16, { type = 'dynamic', restitution = 0.2 })
 	boxes[2] = Box.new(world, 210, 40, 24, 24, { type = 'dynamic', restitution = 0.2 })
 	-- A static ground block (if your map lacks solid at that height)
 	-- boxes[3] = Box.new(world, 160, 120, 120, 16, { type = 'static' })
