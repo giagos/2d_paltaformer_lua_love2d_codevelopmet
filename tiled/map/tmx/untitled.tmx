@@ -57,10 +57,11 @@
   <object id="17" x="128" y="224" width="48.0909" height="15.8182"/>
  </objectgroup>
  <objectgroup color="#0055ff" id="3" name="sensor">
-  <properties>
-   <property name="sensor1" type="bool" value="true"/>
-  </properties>
-  <object id="16" x="252" y="238.5" width="66.5" height="30.5"/>
+  <object id="16" x="252" y="238.5" width="66.5" height="30.5">
+   <properties>
+    <property name="sensor1" type="bool" value="true"/>
+   </properties>
+  </object>
   <object id="19" x="588.667" y="219.333" width="18.6667" height="18.6667">
    <properties>
     <property name="sensor1" type="bool" value="false"/>

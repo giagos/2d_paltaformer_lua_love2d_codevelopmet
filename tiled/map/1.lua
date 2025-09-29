@@ -291,9 +291,7 @@ return {
       offsety = 0,
       parallaxx = 1,
       parallaxy = 1,
-      properties = {
-        ["sensor1"] = true
-      },
+      properties = {},
       objects = {
         {
           id = 16,
@@ -306,7 +304,9 @@ return {
           height = 30.5,
           rotation = 0,
           visible = true,
-          properties = {}
+          properties = {
+            ["sensor1"] = true
+          }
         },
         {
           id = 19,
