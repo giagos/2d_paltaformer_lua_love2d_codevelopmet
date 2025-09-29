@@ -27,6 +27,7 @@ local player
 local balls = {}
 local boxes = {}
 local chain
+local chain2
 local playerTextBox
 
 
@@ -160,6 +161,10 @@ function love.load()
 	-- Create a hanging chain (links connected by revolute joints) anchored near the top
 	-- args: world, anchorX, anchorY, linkCount, linkLength, linkThickness, opts
 	chain = Chain.new(world, 220, 1, 8, 16, 6, { group = -1 })
+
+	-- Spawn a second chain, draggable from its END via a mouse joint
+	-- Use a different group index so the two chains can collide with each other
+	chain2 = Chain.new(world, 300, 1, 8, 16, 6, { group = -2, dragTarget = 'both', endAnchored = true, color = {0.8, 0.9, 0.8, 1} })
 end
 
 function love.update(dt)
@@ -179,6 +184,7 @@ function love.update(dt)
 	for _, b in ipairs(balls) do if b.update then b:update(dt) end end
 	for _, b in ipairs(boxes) do if b.update then b:update(dt) end end
 	if chain and chain.update then chain:update(dt) end
+	if chain2 and chain2.update then chain2:update(dt) end
 	if playerTextBox and playerTextBox.update then playerTextBox:update(dt) end
 end
 
@@ -192,6 +198,7 @@ function love.draw()
 	-- Draw player and debug overlay in the same visual scale as the map
 	love.graphics.scale(scale, scale)
 	if chain and chain.draw then chain:draw() end
+	if chain2 and chain2.draw then chain2:draw() end
 	for _, b in ipairs(balls) do if b.draw then b:draw() end end
 	for _, b in ipairs(boxes) do if b.draw then b:draw() end end
 	if player and player.draw then
@@ -231,25 +238,34 @@ end
 
 -- Forward mouse input to chain for dragging the red anchor
 function love.mousepressed(x, y, button)
-	if chain and chain.mousepressed then
-		-- account for visual scale (map + entities drawn at "scale")
-		local sx, sy = x / scale, y / scale
-		chain:mousepressed(sx, sy, button)
+	-- account for visual scale (map + entities drawn at "scale")
+	local sx, sy = x / scale, y / scale
+	-- Choose one chain to capture the click based on hit test (prefer chain2 end-drag)
+	local captured = false
+	if chain2 and chain2.isMouseOver and chain2.mousepressed then
+		if chain2:isMouseOver(sx, sy) then
+			chain2:mousepressed(sx, sy, button)
+			captured = true
+		end
+	end
+	if (not captured) and chain and chain.isMouseOver and chain.mousepressed then
+		if chain:isMouseOver(sx, sy) then
+			chain:mousepressed(sx, sy, button)
+			captured = true
+		end
 	end
 end
 
 function love.mousereleased(x, y, button)
-	if chain and chain.mousereleased then
-		local sx, sy = x / scale, y / scale
-		chain:mousereleased(sx, sy, button)
-	end
+	local sx, sy = x / scale, y / scale
+	if chain and chain.mousereleased then chain:mousereleased(sx, sy, button) end
+	if chain2 and chain2.mousereleased then chain2:mousereleased(sx, sy, button) end
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
-	if chain and chain.mousemoved then
-		local sx, sy = x / scale, y / scale
-		chain:mousemoved(sx, sy, dx / scale, dy / scale)
-	end
+	local sx, sy = x / scale, y / scale
+	if chain and chain.mousemoved then chain:mousemoved(sx, sy, dx / scale, dy / scale) end
+	if chain2 and chain2.mousemoved then chain2:mousemoved(sx, sy, dx / scale, dy / scale) end
 end
 
 -- Box2D world contact callbacks
