@@ -12,6 +12,7 @@ local state = {
     showColliders = false,
     showSensor1Overlay = false,
     showInfo = false,
+    showFPS = false,
 }
 
 function DebugMenu.init(world, map, player)
@@ -30,6 +31,9 @@ function DebugMenu.keypressed(key)
     elseif key == "f4" then
         state.showInfo = not state.showInfo
         print(string.format('[F4] Debug info %s', state.showInfo and 'ON' or 'OFF'))
+    elseif key == "f6" then
+        state.showFPS = not state.showFPS
+        print(string.format('[F6] FPS counter %s', state.showFPS and 'ON' or 'OFF'))
     end
 end
 
@@ -45,6 +49,24 @@ end
 
 -- Screen-space overlays: call this outside scaled draw (after love.graphics.pop())
 function DebugMenu.drawScreen()
+    -- FPS counter (independent of player or other panels)
+    if state.showFPS then
+        local fps = love.timer.getFPS()
+        local label = string.format("FPS: %d", fps)
+        local pad, lh = 6, 16
+        local font = love.graphics.getFont()
+        local tw = font and font:getWidth(label) or 0
+        local th = lh
+        local x = love.graphics.getWidth() - tw - pad * 2 - 8
+        local y = 8
+        love.graphics.push('all')
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', x, y, tw + pad * 2, th + pad * 2, 4, 4)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(label, x + pad, y + pad)
+        love.graphics.pop()
+    end
+
     if not state.showInfo or not DebugMenu.player then return end
     local p = DebugMenu.player
 
