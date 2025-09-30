@@ -10,7 +10,7 @@ local DebugMenu = {}
 
 local state = {
     showColliders = false,
-    showSensor1Overlay = false,
+    showSensorsOverlay = false, -- F3: show all sensor fixtures
     showInfo = false,
     showFPS = false,
 }
@@ -26,8 +26,8 @@ function DebugMenu.keypressed(key)
         state.showColliders = not state.showColliders
         print(string.format('[F2] Colliders %s', state.showColliders and 'ON' or 'OFF'))
     elseif key == "f3" then
-        state.showSensor1Overlay = not state.showSensor1Overlay
-        print(string.format('[F3] Sensor1 overlay %s', state.showSensor1Overlay and 'ON' or 'OFF'))
+        state.showSensorsOverlay = not state.showSensorsOverlay
+        print(string.format('[F3] Sensors overlay %s', state.showSensorsOverlay and 'ON' or 'OFF'))
     elseif key == "f4" or key == "f" then
         state.showInfo = not state.showInfo
         print(string.format('[%s] Debug info %s', key:upper(), state.showInfo and 'ON' or 'OFF'))
@@ -42,8 +42,8 @@ function DebugMenu.drawWorld()
     if state.showColliders and DebugMenu.world then
         DebugDraw.drawWorldTransparent(DebugMenu.world)
     end
-    if state.showSensor1Overlay and DebugMenu.map and DebugMenu.map.box2d_collision then
-        DebugDraw.drawSensor1Overlay(DebugMenu.map)
+    if state.showSensorsOverlay and DebugMenu.map and DebugMenu.map.box2d_collision then
+        DebugDraw.drawSensorsOverlay(DebugMenu.map)
     end
 end
 

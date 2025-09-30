@@ -126,6 +126,15 @@ function Chain:getEndPosition()
   end
 end
 
+-- Wake up all link bodies to ensure physics responds after anchor moves
+function Chain:wakeAllLinks()
+  for _, l in ipairs(self.links or {}) do
+    if l.body and not l.body:isDestroyed() then
+      l.body:setAwake(true)
+    end
+  end
+end
+
 -- Decide which end is being targeted by the mouse, respecting dragTarget mode
 function Chain:pickDragTarget(mx, my)
   -- Modes: 'start', 'end', 'both'
@@ -243,6 +252,8 @@ function Chain:setAnchor(x, y)
   if self.anchor and not self.anchor:isDestroyed() then
     self.anchor:setPosition(x / meter, y / meter)
   end
+  -- Wake up the chain so it responds immediately after moving the static anchor
+  self:wakeAllLinks()
 end
 
 function Chain:mousepressed(mx, my, button)
@@ -282,6 +293,8 @@ function Chain:mousemoved(mx, my, dx, dy)
         -- Move the static end anchor directly like a handle
         local meter = love.physics.getMeter()
         self.endAnchor:setPosition(mx / meter, my / meter)
+        -- Wake the chain so it reacts to the moved anchor
+        self:wakeAllLinks()
       else
         if self.mouseJoint and not self.mouseJoint:isDestroyed() then
           local meter = love.physics.getMeter()

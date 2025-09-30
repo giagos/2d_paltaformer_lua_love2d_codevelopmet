@@ -4,7 +4,7 @@
 -- Purpose
 --   Centralized trigger/sensor management for Tiled object layers named "sensor" or "sensors".
 --   - Forces any fixture originating from those layers to be a Box2D sensor (non-solid).
---   - Supports named sensors via either object.name = "sensorN" or custom properties sensorN=true.
+--   - Supports named sensors via either object.name = "sensorN" OR custom properties sensorN=true.
 --   - Tracks player overlap with each named sensor and exposes a simple API:
 --       - Query:    if Sensors.sensor1 then ... end
 --       - Callbacks: Sensors.onEnter.sensor1 = function(name) ... end
@@ -22,6 +22,14 @@
 --     make it non-solid (Box2D sensor). Named flags are only required if you want to query it by name
 --     or receive onEnter/onExit events for that specific sensor.
 --   - This module is read-only from the outside; use the provided callback tables to hook behavior.
+--
+-- Policy
+--   - Only fixtures that originate from layers named exactly 'sensor' or 'sensors' are scanned for triggers.
+--   - Within those layers, a fixture becomes a named trigger if:
+--       a) The Tiled object's name matches ^sensor%d+$ (e.g., sensor1, sensor42), OR
+--       b) The Tiled object's properties include sensorN=true for any N (1..999...).
+--   - Fixtures outside these layers may still be set to sensor by explicit physics properties,
+--     but they do NOT participate in named trigger enter/exit unless they are within a sensor layer.
 
 local Sensors = {}
 
@@ -71,10 +79,9 @@ local function collectNamesFromUD(ud)
     return names
 end
 
-local function getNamesFromFixture(fix)
-    local ud = fix and fix:getUserData()
-    if type(ud) ~= 'table' then return {} end
-    return collectNamesFromUD(ud)
+-- Deprecated: name discovery is performed during init() from map.box2d_collision to access object layer/name.
+local function getNamesFromFixture(_)
+    return {}
 end
 
 -- Ensure sensor layers are treated as collidable by STI so fixtures are created at all.
@@ -154,15 +161,32 @@ function Sensors.init(world, map, getPlayerFixtureFn, player)
     end
     ensureFixturesAreSensors(map)
 
-    -- Pre-register names from fixtures
+    -- Pre-register names from fixtures (ONLY from 'sensor' or 'sensors' layers)
     if map and map.box2d_collision then
         for _, c in ipairs(map.box2d_collision) do
             local fix = c.fixture
-            local names = getNamesFromFixture(fix)
-            if next(names) ~= nil then
-                Sensors._fixtureNames[fix] = names
-                for name, _ in pairs(names) do
-                    Sensors._entries[name] = Sensors._entries[name] or { count = 0, active = {} }
+            local names = {}
+            local inSensorLayer = (c.object and c.object.layer and SENSOR_LAYER_NAMES[c.object.layer.name]) or false
+            if inSensorLayer and fix then
+                -- From object name (original object is c.object)
+                local oname = c.object and c.object.name
+                if type(oname) == 'string' and oname:match('^sensor%d+$') then
+                    names[oname] = true
+                end
+                -- From object properties (via fixture userdata.properties mirrored by STI plugin)
+                local ud = fix:getUserData()
+                if type(ud) == 'table' and type(ud.properties) == 'table' then
+                    for k, v in pairs(ud.properties) do
+                        if v == true and type(k) == 'string' and k:match('^sensor%d+$') then
+                            names[k] = true
+                        end
+                    end
+                end
+                if next(names) ~= nil then
+                    Sensors._fixtureNames[fix] = names
+                    for name, _ in pairs(names) do
+                        Sensors._entries[name] = Sensors._entries[name] or { count = 0, active = {} }
+                    end
                 end
             end
         end
@@ -195,10 +219,11 @@ function Sensors.beginContact(a, b)
 
     local function touch(fixSensor, fixOther)
         if not isPlayerFixture(Sensors, fixOther) then return end
-        local names = Sensors._fixtureNames[fixSensor] or getNamesFromFixture(fixSensor)
+        -- Only honor fixtures that were pre-registered (i.e., in sensor layers)
+        local names = Sensors._fixtureNames[fixSensor]
         if next(names) == nil then return end
         -- cache mapping if discovered late
-        Sensors._fixtureNames[fixSensor] = names
+        -- no fallback; registration occurs during init
         for name, _ in pairs(names) do
             Sensors._entries[name] = Sensors._entries[name] or { count = 0, active = {} }
             local entry = Sensors._entries[name]
@@ -225,7 +250,7 @@ function Sensors.endContact(a, b)
 
     local function untouch(fixSensor, fixOther)
         if not isPlayerFixture(Sensors, fixOther) then return end
-        local names = Sensors._fixtureNames[fixSensor]
+    local names = Sensors._fixtureNames[fixSensor]
         if not names then return end
         for name, _ in pairs(names) do
             local entry = Sensors._entries[name]

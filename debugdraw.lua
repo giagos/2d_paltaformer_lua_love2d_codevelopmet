@@ -95,4 +95,32 @@ function DebugDraw.drawSensor1Overlay(map)
   love.graphics.setLineWidth(prevLineWidth)
 end
 
+-- Draw all fixtures that are sensors (fixture:isSensor() == true)
+function DebugDraw.drawSensorsOverlay(map)
+  if not map or not map.box2d_collision then return end
+  local prevLineWidth = love.graphics.getLineWidth()
+  love.graphics.setLineWidth(2)
+  love.graphics.setColor(0.1, 0.9, 1.0, 0.95) -- cyan
+  for _, c in ipairs(map.box2d_collision) do
+    if c.fixture and c.fixture.isSensor and c.fixture:isSensor() then
+      local shape = c.fixture:getShape()
+      local body = c.fixture:getBody()
+      local st = shape:getType()
+      if st == 'polygon' or st == 'chain' then
+        love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
+      elseif st == 'edge' then
+        local x1,y1,x2,y2 = shape:getPoints()
+        x1,y1 = body:getWorldPoint(x1,y1)
+        x2,y2 = body:getWorldPoint(x2,y2)
+        love.graphics.line(x1,y1,x2,y2)
+      elseif st == 'circle' then
+        local x,y = body:getWorldPoint(shape:getPoint())
+        love.graphics.circle('line', x, y, shape:getRadius())
+      end
+    end
+  end
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.setLineWidth(prevLineWidth)
+end
+
 return DebugDraw

@@ -199,6 +199,10 @@ function Map:init()
   self.solidLayer = state.level.layers and state.level.layers.solid or nil
   ---@diagnostic disable-next-line: undefined-field
   self.entityLayer = state.level.layers and state.level.layers.entity or nil
+  ---@diagnostic disable-next-line: undefined-field
+  self.nm_mapLayer = state.level.layers and state.level.layers.nm_map or nil
+  ---@diagnostic disable-next-line: undefined-field
+  self.transitionsLayer = state.level.layers and state.level.layers.transitions or nil
 
   -- Try to find a ground tile layer by name or fallback to first tilelayer
   ---@diagnostic disable-next-line: undefined-field
@@ -213,10 +217,16 @@ function Map:init()
   -- Visibility: hide collision/debug/object layers
   local solidLayer = self.solidLayer
   local entityLayer = self.entityLayer
+  local nm_map = self.nm_mapLayer
+  local transitionsLayer = self.transitionsLayer
   ---@diagnostic disable-next-line: undefined-field
   if solidLayer then solidLayer.visible = false end
   ---@diagnostic disable-next-line: undefined-field
   if entityLayer then entityLayer.visible = false end
+  ---@diagnostic disable-next-line: undefined-field
+  if nm_map then nm_map.visible = true end
+  ---@diagnostic disable-next-line: undefined-field
+  if transitionsLayer then transitionsLayer.visible = false end
   hideDebugLayers(state.level)
 
   -- Map width in pixels (exported like your example via global MapWidth), plus internal copy
