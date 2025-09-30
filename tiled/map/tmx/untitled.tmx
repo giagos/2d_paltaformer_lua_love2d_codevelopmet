@@ -43,7 +43,7 @@
   <properties>
    <property name="collidable" type="bool" value="true"/>
   </properties>
-  <object id="5" x="0.5" y="287" width="645.985" height="81.7121">
+  <object id="5" x="-12.1667" y="287" width="658.652" height="81.7121">
    <properties>
     <property name="collidable" type="bool" value="true"/>
    </properties>
@@ -70,19 +70,12 @@
   <object id="26" name="ball1" x="102.75" y="184.25" width="15.5" height="15.5">
    <ellipse/>
   </object>
-  <object id="27" name="ball1" x="284.75" y="158.75" width="15.5" height="15.5">
-   <ellipse/>
-  </object>
   <object id="28" name="ball2" x="422.75" y="108.5" width="21.5" height="23">
    <ellipse/>
   </object>
-  <object id="29" name="box2" x="467.682" y="169.545" width="27.6364" height="26.9091"/>
   <object id="31" name="box1" x="21.3637" y="121.727" width="16.2727" height="15.5455"/>
   <object id="32" name="box1" x="402.864" y="211.227" width="16.2727" height="15.5455"/>
   <object id="33" name="box2" x="360.682" y="243.045" width="27.6364" height="26.9091"/>
-  <object id="34" name="box2" x="360.182" y="204.545" width="27.6364" height="26.9091"/>
-  <object id="35" name="box2" x="353.182" y="134.045" width="27.6364" height="26.9091"/>
-  <object id="36" name="box2" x="352.682" y="58.5454" width="27.6364" height="26.9091"/>
  </objectgroup>
  <objectgroup color="#0055ff" id="3" name="sensor">
   <object id="16" name="sensor1" x="252" y="238.5" width="66.5" height="30.5">

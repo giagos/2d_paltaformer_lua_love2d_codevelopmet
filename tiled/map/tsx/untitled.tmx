@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="18">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="21">
  <editorsettings>
   <export target="../2.lua" format="lua"/>
  </editorsettings>
@@ -37,8 +37,8 @@
   <properties>
    <property name="collidable" type="bool" value="true"/>
   </properties>
-  <object id="1" x="0.0625" y="320" width="640.313" height="48.375"/>
-  <object id="3" x="463.75" y="303.875" width="176.125" height="16.25"/>
+  <object id="1" x="-47.4375" y="320" width="705.313" height="48.375"/>
+  <object id="3" x="463.75" y="303.875" width="192.125" height="16.25"/>
   <object id="4" x="64" y="240.125" width="47.875" height="31.75"/>
   <object id="5" x="111.875" y="255.875" width="144.25" height="32"/>
   <object id="6" x="336" y="256" width="31.875" height="31.9728"/>
@@ -47,14 +47,16 @@
   <object id="9" x="368.244" y="224.195" width="31.875" height="31.9728"/>
   <object id="10" x="383.909" y="207.818" width="16.0909" height="16.2727"/>
   <object id="11" x="400.091" y="224" width="31.9091" height="16.0909"/>
-  <object id="15" x="-43.3333" y="-0.666667" width="43.3333" height="368"/>
+  <object id="15" x="-54.8333" y="1.33333" width="43.3333" height="368"/>
   <object id="17" x="47.9091" y="272" width="16" height="16.0909"/>
+  <object id="20" x="640" y="0" width="43.3333" height="368"/>
  </objectgroup>
  <objectgroup color="#00ff7f" id="3" name="entity">
   <object id="12" name="box2" x="160.5" y="191.5" width="31.25" height="31.5"/>
  </objectgroup>
  <objectgroup color="#00ffff" id="4" name="transitions">
   <object id="13" name="transition1" x="631.5" y="-2" width="16.25" height="305.5"/>
+  <object id="19" name="transition2" x="-9.125" y="13.25" width="16.25" height="305.5"/>
  </objectgroup>
  <objectgroup color="#0000ff" id="5" name="sensor">
   <object id="14" name="sensor1" x="276" y="226.667" width="46.3333" height="27">

@@ -14,18 +14,33 @@
         "": {
             "scaleInDock": 1
         },
-        "map/tmx/untitled.tmx": {
+        "map/tmx/map3.tmx": {
             "expandedObjectLayers": [
-                4,
                 2,
-                5,
                 3
             ],
-            "scale": 2,
-            "selectedLayer": 4,
+            "scale": 1.5,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 271.5,
-                "y": 241.75
+                "x": 482.66666666666663,
+                "y": 239.99999999999997
+            }
+        },
+        "map/tmx/map3.tmx#placeholder": {
+            "scaleInDock": 1
+        },
+        "map/tmx/untitled.tmx": {
+            "expandedObjectLayers": [
+                5,
+                2,
+                3,
+                4
+            ],
+            "scale": 1.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 179.3333333333333,
+                "y": 259.33333333333337
             }
         },
         "map/tmx/untitled.tmx#placeholder": {
@@ -37,23 +52,23 @@
         },
         "map/tsx/untitled.tmx": {
             "expandedObjectLayers": [
-                4,
-                2,
                 5,
-                3
+                2,
+                3,
+                4
             ],
             "scale": 2,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 420.5,
-                "y": 187.75
+                "x": 218,
+                "y": 187.5
             }
         },
         "map/tsx/untitled.tmx#placeholder": {
             "scaleInDock": 5.5
         }
     },
-    "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
+    "last.exportedFilePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
     "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
     "map.height": 23,
     "map.lastUsedExportFilter": "Lua files (*.lua)",
