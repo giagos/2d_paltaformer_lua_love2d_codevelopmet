@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 7,
-  nextobjectid = 38,
+  nextobjectid = 41,
   properties = {},
   tilesets = {
     {
@@ -276,19 +276,6 @@ return {
           y = 240.25,
           width = 32.125,
           height = 46.375,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 15,
-          name = "",
-          type = "",
-          shape = "rectangle",
-          x = -20.5,
-          y = 0.833333,
-          width = 20.5,
-          height = 284.167,
           rotation = 0,
           visible = true,
           properties = {}
@@ -569,13 +556,13 @@ return {
       objects = {
         {
           id = 37,
-          name = "transitions1",
+          name = "transition1",
           type = "",
           shape = "rectangle",
-          x = 0.5,
-          y = 239,
+          x = -11.5,
+          y = 10,
           width = 15.5,
-          height = 16.125,
+          height = 276.125,
           rotation = 0,
           visible = true,
           properties = {}

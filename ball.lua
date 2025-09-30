@@ -14,11 +14,13 @@
 
 local Ball = {}
 Ball.__index = Ball
+Ball._active = {}
 
 -- Construct and return a new Ball instance
 function Ball.new(world, x, y, radius, opts)
   local self = setmetatable({}, Ball)
   self:load(world, x, y, radius, opts)
+  table.insert(Ball._active, self)
   return self
 end
 
@@ -51,6 +53,29 @@ function Ball:load(world, x, y, radius, opts)
   if opts.vx or opts.vy then
     self.physics.body:setLinearVelocity((opts.vx or 0) / meter, (opts.vy or 0) / meter)
   end
+end
+
+-- Remove this instance: destroy body and unregister from active list
+function Ball:remove()
+  for i, instance in ipairs(Ball._active) do
+    if instance == self then
+      if self.physics and self.physics.body and (not self.physics.body:isDestroyed()) then
+        self.physics.body:destroy()
+      end
+      Ball._active[i] = Ball._active[#Ball._active]
+      Ball._active[#Ball._active] = nil
+      break
+    end
+  end
+end
+
+function Ball.removeAll()
+  for _, v in ipairs(Ball._active) do
+    if v.physics and v.physics.body and (not v.physics.body:isDestroyed()) then
+      v.physics.body:destroy()
+    end
+  end
+  Ball._active = {}
 end
 
 function Ball:update(dt)

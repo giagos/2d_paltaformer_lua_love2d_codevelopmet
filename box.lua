@@ -9,10 +9,12 @@
 
 local Box = {}
 Box.__index = Box
+Box._active = {}
 
 function Box.new(world, x, y, w, h, opts)
   local self = setmetatable({}, Box)
   self:load(world, x, y, w, h, opts)
+  table.insert(Box._active, self)
   return self
 end
 
@@ -42,6 +44,28 @@ function Box:load(world, x, y, w, h, opts)
     self.physics.body:resetMassData()
   end
   if opts.angularDamping then self.physics.body:setAngularDamping(opts.angularDamping) end
+end
+
+function Box:remove()
+  for i, instance in ipairs(Box._active) do
+    if instance == self then
+      if self.physics and self.physics.body and (not self.physics.body:isDestroyed()) then
+        self.physics.body:destroy()
+      end
+      Box._active[i] = Box._active[#Box._active]
+      Box._active[#Box._active] = nil
+      break
+    end
+  end
+end
+
+function Box.removeAll()
+  for _, v in ipairs(Box._active) do
+    if v.physics and v.physics.body and (not v.physics.body:isDestroyed()) then
+      v.physics.body:destroy()
+    end
+  end
+  Box._active = {}
 end
 
 function Box:update(dt)

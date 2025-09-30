@@ -14,10 +14,12 @@
 
 local Chain = {}
 Chain.__index = Chain
+Chain._active = {}
 
 function Chain.new(world, anchorX, anchorY, linkCount, linkLength, linkThickness, opts)
   local self = setmetatable({}, Chain)
   self:load(world, anchorX, anchorY, linkCount, linkLength, linkThickness, opts)
+  table.insert(Chain._active, self)
   return self
 end
 
@@ -224,6 +226,24 @@ function Chain:destroy()
   if self.endAnchor and not self.endAnchor:isDestroyed() then self.endAnchor:destroy() end
   self.joints = {}
   self.links = {}
+end
+
+function Chain:remove()
+  for i, instance in ipairs(Chain._active) do
+    if instance == self then
+      self:destroy()
+      Chain._active[i] = Chain._active[#Chain._active]
+      Chain._active[#Chain._active] = nil
+      break
+    end
+  end
+end
+
+function Chain.removeAll()
+  for _, v in ipairs(Chain._active) do
+    v:destroy()
+  end
+  Chain._active = {}
 end
 
 -- Input helpers for clickable/dragging anchor

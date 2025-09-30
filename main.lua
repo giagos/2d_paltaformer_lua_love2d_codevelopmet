@@ -29,6 +29,7 @@ function love.load()
 
 	-- Initialize DebugMenu and hook into Map draw for world overlays
 	DebugMenu.init(Map:getWorld(), Map:getLevel(), Map:getPlayer())
+	if DebugMenu.setMapOwner then DebugMenu.setMapOwner(Map) end
 	if Map.setWorldOverlayDrawFn then
 		Map:setWorldOverlayDrawFn(function()
 			DebugMenu.drawWorld()

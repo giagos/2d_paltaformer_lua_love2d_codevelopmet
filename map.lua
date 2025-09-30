@@ -9,13 +9,15 @@ local Box = require("box")
 local Chain = require("chain")
 local PlayerTextBox = require("player_text_box")
 local Sensors = require("sensor_handler")
+local LevelTransitions = require("level_transitions_handler")
 
 local Map = {}
 Map.__index = Map
 
 -- Internal state
 local state = {
-  currentLevel = "tiled/map/1", -- base path without .lua; call Map:setCurrentLevel() to change
+  currentLevel = "tiled/map/1", -- string base path without .lua
+  currentLevelIndex = 1,         -- numeric index (1,2,3...) that derives the base path
   level = nil,         -- STI map
   world = nil,         -- Box2D world
   background = nil,    -- love.graphics Image
@@ -27,6 +29,7 @@ local state = {
   chain = nil,
   chain2 = nil,
   mapWidth = 0,
+  transitions = nil,
 }
 
 -- Preset sizes by name for simple variants. Edit here to change once for all.
@@ -57,13 +60,26 @@ function Map:getLevel() return state.level end
 function Map:getPlayer() return state.player end
 function Map:getScale() return state.scale end
 function Map:getMapWidth() return state.mapWidth end
+function Map:_getTransitions() return state.transitions end
 
 -- Optional: change or query current level base path (without .lua)
 function Map:setCurrentLevel(basePath)
   state.currentLevel = basePath or state.currentLevel
+  if type(state.currentLevel) == 'string' then
+    local num = state.currentLevel:match("tiled/map/(%d+)") or state.currentLevel:match("tiled\\/map\\/(%d+)")
+    if num then state.currentLevelIndex = tonumber(num) end
+  end
 end
 function Map:getCurrentLevel()
   return state.currentLevel
+end
+-- Convenience: set/get numeric level and keep base path in sync (tiled/map/N)
+function Map:setCurrentLevelIndex(n)
+  state.currentLevelIndex = tonumber(n) or state.currentLevelIndex or 1
+  state.currentLevel = string.format("tiled/map/%d", state.currentLevelIndex)
+end
+function Map:getCurrentLevelIndex()
+  return state.currentLevelIndex
 end
 
 -- Contact forwarding (to player + Sensors)
@@ -72,6 +88,13 @@ local function beginContact(a, b, collision)
     state.player:beginContact(a, b, collision)
   end
   Sensors.beginContact(a, b)
+  if state.transitions then
+    ---@diagnostic disable-next-line: undefined-field
+    if state.transitions.beginContact then
+      ---@diagnostic disable-next-line: undefined-field
+      state.transitions:beginContact(a, b)
+    end
+  end
 end
 
 local function endContact(a, b, collision)
@@ -79,12 +102,19 @@ local function endContact(a, b, collision)
     state.player:endContact(a, b, collision)
   end
   Sensors.endContact(a, b)
+  if state.transitions then
+    ---@diagnostic disable-next-line: undefined-field
+    if state.transitions.endContact then
+      ---@diagnostic disable-next-line: undefined-field
+      state.transitions:endContact(a, b)
+    end
+  end
 end
 
 local function ensureSensorLayersCollidable(level)
   if level and level.layers then
     for _, layer in ipairs(level.layers) do
-      if layer.type == 'objectgroup' and (layer.name == 'sensor' or layer.name == 'sensors') then
+      if layer.type == 'objectgroup' and (layer.name == 'sensor' or layer.name == 'sensors' or layer.name == 'transitions') then
         layer.properties = layer.properties or {}
         if layer.properties.collidable ~= true then
           layer.properties.collidable = true
@@ -114,10 +144,15 @@ local function mergeLayerPropsAndForceSensors(level)
           for k,v in pairs(ud.properties) do props[k] = v end
         end
         local layerProps = (c.object and c.object.layer and c.object.layer.properties) or nil
+        local layerName = (c.object and c.object.layer and c.object.layer.name) or nil
         if type(layerProps) == 'table' then
           for k,v in pairs(layerProps) do if props[k] == nil then props[k] = v end end
           -- If declared as a trigger (sensor1) ensure sensor behavior
           if props.sensor1 == true then c.fixture:setSensor(true) end
+        end
+        -- Always force transitions fixtures to be sensors
+        if layerName == 'transitions' then
+          c.fixture:setSensor(true)
         end
         ud.properties = props
         c.fixture:setUserData(ud)
@@ -184,7 +219,7 @@ end
 -- Initialize map/layers and spawn entities (pattern similar to your example)
 function Map:init()
   -- Load STI map for the current level
-  local base = state.currentLevel or "tiled/map/1"
+  local base = state.currentLevel or string.format("tiled/map/%d", state.currentLevelIndex or 1)
   local path = base:match("%.lua$") and base or (base .. ".lua")
   state.level = sti(path, { "box2d" })
 
@@ -194,46 +229,53 @@ function Map:init()
   state.level:box2d_init(state.world)
   mergeLayerPropsAndForceSensors(state.level)
 
-  -- Layer refs commonly used
+  -- Collect layers into a table for easy access and visibility control
+  self.layers = {}
   ---@diagnostic disable-next-line: undefined-field
-  self.solidLayer = state.level.layers and state.level.layers.solid or nil
-  ---@diagnostic disable-next-line: undefined-field
-  self.entityLayer = state.level.layers and state.level.layers.entity or nil
-  ---@diagnostic disable-next-line: undefined-field
-  self.nm_mapLayer = state.level.layers and state.level.layers.nm_map or nil
-  ---@diagnostic disable-next-line: undefined-field
-  self.transitionsLayer = state.level.layers and state.level.layers.transitions or nil
-
-  -- Try to find a ground tile layer by name or fallback to first tilelayer
-  ---@diagnostic disable-next-line: undefined-field
-  self.groundLayer = (state.level.layers and (state.level.layers.ground or state.level.layers["Tile Layer 1"])) or nil
-  if not self.groundLayer then
-    ---@diagnostic disable-next-line: undefined-field
-    for _, layer in ipairs(state.level.layers or {}) do
-      if layer.type == "tilelayer" then self.groundLayer = layer; break end
+  local layers = state.level.layers or {}
+  self.layers.solid       = layers.solid
+  self.layers.entity      = layers.entity
+  self.layers.ground      = layers.ground or layers["Tile Layer 1"]
+  self.layers.sensor      = layers.sensor
+  self.layers.sensors     = layers.sensors
+  self.layers.transitions = layers.transitions
+  self.layers.nm_map      = layers.nm_map
+  -- Fallback: if ground missing, pick first tilelayer
+  if not self.layers.ground then
+    for _, layer in ipairs(layers) do
+      if layer.type == "tilelayer" then self.layers.ground = layer; break end
     end
   end
+  -- Also expose legacy fields for compatibility
+  self.solidLayer       = self.layers.solid
+  self.entityLayer      = self.layers.entity
+  self.groundLayer      = self.layers.ground
+  self.nm_mapLayer      = self.layers.nm_map
+  self.transitionsLayer = self.layers.transitions
 
-  -- Visibility: hide collision/debug/object layers
-  local solidLayer = self.solidLayer
-  local entityLayer = self.entityLayer
-  local nm_map = self.nm_mapLayer
-  local transitionsLayer = self.transitionsLayer
-  ---@diagnostic disable-next-line: undefined-field
-  if solidLayer then solidLayer.visible = false end
-  ---@diagnostic disable-next-line: undefined-field
-  if entityLayer then entityLayer.visible = false end
-  ---@diagnostic disable-next-line: undefined-field
-  if nm_map then nm_map.visible = true end
-  ---@diagnostic disable-next-line: undefined-field
-  if transitionsLayer then transitionsLayer.visible = false end
+  -- Visibility: centralized control via a small config
+  local visibility = {
+    solid = false,
+    entity = false,
+    transitions = false,
+    sensor = false,
+    sensors = false,
+    nm_map = true,
+    -- ground remains as authored (nil = no change)
+  }
+  for name, layer in pairs(self.layers) do
+    if layer and visibility[name] ~= nil then
+      ---@diagnostic disable-next-line: undefined-field
+      layer.visible = visibility[name]
+    end
+  end
   hideDebugLayers(state.level)
 
   -- Map width in pixels (exported like your example via global MapWidth), plus internal copy
   ---@diagnostic disable-next-line: undefined-field
   local tilew = state.level.tilewidth or 16
   ---@diagnostic disable-next-line: undefined-field
-  local tilesWide = (self.groundLayer and self.groundLayer.width) or state.level.width or 0
+  local tilesWide = (self.layers.ground and self.layers.ground.width) or state.level.width or 0
   state.mapWidth = tilesWide * tilew
   MapWidth = state.mapWidth -- optional global for external use (matches your snippet)
 
@@ -248,6 +290,12 @@ function Map:load(scale)
   state.world = love.physics.newWorld(0, 1200)
   ---@diagnostic disable-next-line: undefined-field
   state.world:setCallbacks(beginContact, endContact)
+
+  -- Ensure numeric index and base path are in sync (user-facing pattern: currentLevelIndex)
+  if not state.currentLevelIndex or state.currentLevelIndex < 1 then
+    state.currentLevelIndex = 1
+  end
+  self:setCurrentLevelIndex(state.currentLevelIndex)
 
   -- Initialize map, layers, and spawn entities
   self:init()
@@ -286,6 +334,15 @@ function Map:load(scale)
   -- Chains (manual anchors for now)
   state.chain = Chain.new(state.world, 220, 1, 8, 16, 6, { group = -1 })
   state.chain2 = Chain.new(state.world, 300, 1, 8, 16, 6, { group = -2, dragTarget = 'both', endAnchored = true, color = {0.8, 0.9, 0.8, 1} })
+
+  -- Level transitions handler: wire with player fixture getter and switching function
+  state.transitions = LevelTransitions.init(
+    state.world,
+    state.level,
+    function() return state.player and state.player.physics and state.player.physics.fixture or nil end,
+    function(destMapPath, tx, ty) self:_switchLevelAndTeleport(destMapPath, tx, ty) end,
+    state.currentLevel
+  )
 end
 
 function Map:update(dt)
@@ -302,6 +359,68 @@ function Map:update(dt)
   if state.chain and state.chain.update then state.chain:update(dt) end
   if state.chain2 and state.chain2.update then state.chain2:update(dt) end
   if state.playerTextBox and state.playerTextBox.update then state.playerTextBox:update(dt) end
+  if state.transitions and state.transitions.update then state.transitions:update(dt) end
+end
+
+-- Internal: switch STI map and teleport player to new position while preserving velocity
+function Map:_switchLevelAndTeleport(destMapPath, tx, ty)
+  -- Preserve current player velocity in pixel units
+  local vx, vy = 0, 0
+  if state.player and state.player.xVel and state.player.yVel then
+    vx, vy = state.player.xVel, state.player.yVel
+  end
+
+  -- Change current level path and re-init the STI level
+  self:setCurrentLevel(destMapPath)
+  -- Clean old level's fixtures/objects before rebuilding
+  self:clean()
+  -- Rebuild map fixtures for new level while keeping the same world and player
+  self:init()
+
+  -- Teleport player (pixels) and keep velocities
+  local meter = love.physics.getMeter()
+  if state.player and state.player.physics and state.player.physics.body then
+    state.player.physics.body:setPosition(tx / meter, ty / meter)
+    state.player.xVel, state.player.yVel = vx, vy
+  end
+
+  -- Rebuild transitions handler for the new level
+  state.transitions = LevelTransitions.init(
+    state.world,
+    state.level,
+    function() return state.player and state.player.physics and state.player.physics.fixture or nil end,
+    function(npath, nx, ny) self:_switchLevelAndTeleport(npath, nx, ny) end,
+    state.currentLevel
+  )
+  if state.transitions and state.transitions.setArrivalLatch then
+    state.transitions:setArrivalLatch(true)
+  end
+
+  -- Rebuild sensors for the new map (preserve callbacks inside Sensors)
+  Sensors.init(state.world, state.level, function()
+    return state.player and state.player.physics and state.player.physics.fixture or nil
+  end)
+end
+
+-- Clean current level: remove STI solid layer bodies and clear all spawned objects
+function Map:clean()
+  if state.level then
+    local remover = rawget(state.level, "box2d_removeLayer")
+    if type(remover) == 'function' then
+      pcall(remover, state.level, "solid")
+      pcall(remover, state.level, "sensor")
+      pcall(remover, state.level, "sensors")
+      pcall(remover, state.level, "transitions")
+    end
+  end
+  if Ball and Ball.removeAll then Ball.removeAll() end
+  if Box and Box.removeAll then Box.removeAll() end
+  if Chain and Chain.removeAll then Chain.removeAll() end
+  -- Clear tables we maintain
+  state.balls = {}
+  state.boxes = {}
+  state.chain = nil
+  state.chain2 = nil
 end
 
 function Map:draw()

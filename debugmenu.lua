@@ -13,6 +13,7 @@ local state = {
     showSensorsOverlay = false, -- F3: show all sensor fixtures
     showInfo = false,
     showFPS = false,
+    showTransitions = false,
 }
 
 function DebugMenu.init(world, map, player)
@@ -31,7 +32,11 @@ function DebugMenu.keypressed(key)
     elseif key == "f4" or key == "f" then
         state.showInfo = not state.showInfo
         print(string.format('[%s] Debug info %s', key:upper(), state.showInfo and 'ON' or 'OFF'))
+    elseif key == "f5" then
+        state.showTransitions = not state.showTransitions
+        print(string.format('[F5] Transitions panel %s', state.showTransitions and 'ON' or 'OFF'))
     elseif key == "f6" then
+        -- F6 dedicated to FPS
         state.showFPS = not state.showFPS
         print(string.format('[F6] FPS counter %s', state.showFPS and 'ON' or 'OFF'))
     end
@@ -65,6 +70,83 @@ function DebugMenu.drawScreen()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print(label, x + pad, y + pad)
         love.graphics.pop()
+    end
+
+    -- Transitions inspector (F6 + Shift)
+    if state.showTransitions and DebugMenu.map then
+        local lines = { 'Transitions (current map)' }
+        local added = 0
+        -- Try to read via transitions handler cache on Map
+        local mapModule = DebugMenu.map -- STI map or Map.level
+        local owner = DebugMenu._mapOwner -- set from init if needed
+        local transitionsState = nil
+        if owner and owner.getCurrentLevel then
+            -- owner is likely Map; try to access its private state via known field
+            transitionsState = owner and owner._getTransitions and owner:_getTransitions() or nil
+        end
+        -- Fallback: scan box2d_collision for transitions layer
+        local function pushLine(name, dest, candidates)
+            local text
+            if dest and dest.mapPath then
+                text = string.format('%s -> %s.lua', name, dest.mapPath)
+            else
+                if candidates and #candidates > 0 then
+                    local parts = {}
+                    for i, c in ipairs(candidates) do parts[i] = c.mapPath .. '.lua' end
+                    text = string.format('%s -> candidates: %s', name, table.concat(parts, ', '))
+                else
+                    text = string.format('%s -> (no destination)', name)
+                end
+            end
+            table.insert(lines, text)
+            added = added + 1
+        end
+        local destinations = nil
+        local candidatesByName = nil
+        if transitionsState and transitionsState.destinations then
+            destinations = transitionsState.destinations
+            candidatesByName = destinations.__candidates
+        end
+        if mapModule and mapModule.box2d_collision then
+            local seen = {}
+            for _, c in ipairs(mapModule.box2d_collision) do
+                if c and c.fixture and c.object and c.object.layer and c.object.layer.name == 'transitions' then
+                    local nm = c.object.name or ''
+                    if type(nm) == 'string' and nm:match('^transition%d+$') then
+                        if not seen[nm] then
+                            seen[nm] = true
+                            local dest = destinations and destinations[nm] or nil
+                            local cands = candidatesByName and candidatesByName[nm] or nil
+                            pushLine(nm, dest, cands)
+                        end
+                    end
+                end
+            end
+        end
+
+        if added == 0 then
+            table.insert(lines, '(none found)')
+        end
+
+        -- Draw panel
+        local x, y, pad, lh = 8, 8, 6, 16
+        local w = 0
+        local font = love.graphics.getFont()
+        for _, line in ipairs(lines) do
+            local tw = font and font:getWidth(line) or 0
+            if tw > w then w = tw end
+        end
+        local h = lh * #lines
+        love.graphics.push('all')
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', x - pad, y - pad, w + pad * 2, h + pad * 2, 4, 4)
+        love.graphics.setColor(1, 1, 1, 1)
+        for i, line in ipairs(lines) do
+            love.graphics.print(line, x, y + (i - 1) * lh)
+        end
+        love.graphics.pop()
+        -- Continue to show player panel below if enabled
+        y = y + h + 8
     end
 
     if not state.showInfo or not DebugMenu.player then return end
@@ -105,6 +187,11 @@ end
 
 function DebugMenu.getStates()
     return state
+end
+
+-- Optional: allow Map to pass itself for deeper transitions access
+function DebugMenu.setMapOwner(owner)
+    DebugMenu._mapOwner = owner
 end
 
 return DebugMenu

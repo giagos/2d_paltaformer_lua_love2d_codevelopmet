@@ -15,19 +15,42 @@
             "scaleInDock": 1
         },
         "map/tmx/untitled.tmx": {
+            "expandedObjectLayers": [
+                4,
+                2,
+                5,
+                3
+            ],
             "scale": 2,
-            "selectedLayer": 1,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 323.5,
-                "y": 150.75
+                "x": 271.5,
+                "y": 241.75
             }
         },
         "map/tmx/untitled.tmx#placeholder": {
             "scaleInDock": 1
         },
         "map/tsx/placeholder.tsx": {
-            "scaleInDock": 1,
+            "scaleInDock": 8,
             "scaleInEditor": 1
+        },
+        "map/tsx/untitled.tmx": {
+            "expandedObjectLayers": [
+                4,
+                2,
+                5,
+                3
+            ],
+            "scale": 2,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 420.5,
+                "y": 187.75
+            }
+        },
+        "map/tsx/untitled.tmx#placeholder": {
+            "scaleInDock": 5.5
         }
     },
     "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",

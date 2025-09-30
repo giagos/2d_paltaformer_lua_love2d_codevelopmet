@@ -149,9 +149,11 @@ function Sensors.init(world, map, getPlayerFixtureFn, player)
     Sensors.world = world
     Sensors.map = map
     Sensors.getPlayerFixture = getPlayerFixtureFn or function() return defaultGetPlayerFixture(player) end
+    -- Rebuild entries and fixture index for the new map
     Sensors._entries = {}       -- [name] = { count = number, active = { [fixture]=true, ... } }
-    Sensors._onEnter = {}       -- [name] = function(name) ... end
-    Sensors._onExit  = {}       -- [name] = function(name) ... end
+    -- Preserve any previously registered callbacks across map switches
+    Sensors._onEnter = Sensors._onEnter or {}   -- [name] = function(name) ... end
+    Sensors._onExit  = Sensors._onExit  or {}   -- [name] = function(name) ... end
     Sensors._fixtureNames = {}  -- [fixture] = { [name]=true, ... }
     setmetatable(Sensors, mt)
 
@@ -221,7 +223,7 @@ function Sensors.beginContact(a, b)
         if not isPlayerFixture(Sensors, fixOther) then return end
         -- Only honor fixtures that were pre-registered (i.e., in sensor layers)
         local names = Sensors._fixtureNames[fixSensor]
-        if next(names) == nil then return end
+        if not names or next(names) == nil then return end
         -- cache mapping if discovered late
         -- no fallback; registration occurs during init
         for name, _ in pairs(names) do
