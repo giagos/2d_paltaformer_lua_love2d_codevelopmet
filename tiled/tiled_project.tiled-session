@@ -12,18 +12,14 @@
     ],
     "fileStates": {
         "": {
-            "scaleInDock": 1
+            "scaleInDock": 5.5
         },
         "map/tmx/map3.tmx": {
-            "expandedObjectLayers": [
-                2,
-                3
-            ],
-            "scale": 1.5,
-            "selectedLayer": 2,
+            "scale": 2.219140625,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 482.66666666666663,
-                "y": 239.99999999999997
+                "x": 319.943671888752,
+                "y": 184.08026755852845
             }
         },
         "map/tmx/map3.tmx#placeholder": {
@@ -31,16 +27,16 @@
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
-                5,
+                4,
                 2,
-                3,
-                4
+                5,
+                3
             ],
-            "scale": 1.5,
-            "selectedLayer": 1,
+            "scale": 2,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 179.3333333333333,
-                "y": 259.33333333333337
+                "x": 306.5,
+                "y": 237.25
             }
         },
         "map/tmx/untitled.tmx#placeholder": {
@@ -52,16 +48,16 @@
         },
         "map/tsx/untitled.tmx": {
             "expandedObjectLayers": [
-                5,
+                4,
                 2,
-                3,
-                4
+                5,
+                3
             ],
             "scale": 2,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 218,
-                "y": 187.5
+                "x": 229,
+                "y": 298.75
             }
         },
         "map/tsx/untitled.tmx#placeholder": {
