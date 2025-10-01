@@ -8,9 +8,9 @@
 -- - This module will:
 --   1) In the current map, find all transitions and make their fixtures sensors.
 --   2) Scan all maps under 'tiled/map' for matching transition names and build a mapping
---      from name -> { mapPath, x, y } for the destination center.
---   3) When the player overlaps a transition and then exits it, switch to the destination map
---      and teleport the player to the paired rectangle center, preserving velocity.
+--      from name -> { mapPath, x, y } for the destination.
+--   3) When the player enters a transition, immediately switch to the destination map
+--      and teleport the player to the appropriate side of the destination transition box.
 --   4) Prevent immediate re-trigger by using a short cooldown after teleport.
 
 local LevelTransitions = {}
@@ -186,11 +186,13 @@ function LevelTransitions.init(world, map, getPlayerFixtureFn, switchLevelFn, cu
   self.current = collectCurrentTransitions(map)         -- name -> { fixture, x, y }
   self.destinations = buildDestinationsIndex(self.currentMapPath) -- name -> { mapPath, x, y }
 
-  self.pending = nil  -- { name }
   self.cooldown = 0   -- seconds to ignore new triggers after switching
   self._queuedSwitch = nil -- { mapPath, x, y }
-  self.arrivalLatch = false
-  self.arrivalOverlaps = {} -- set of fixtures currently overlapping during arrival latch
+  
+  -- Commented out exit-based system
+  --self.pending = nil  -- { name }
+  --self.arrivalLatch = false
+  --self.arrivalOverlaps = {} -- set of fixtures currently overlapping during arrival latch
   return self
 end
 
@@ -205,18 +207,18 @@ function LevelTransitions:update(dt)
     self.switchLevel(sw.mapPath, sw.x, sw.y)
     -- set a small cooldown to avoid immediate re-trigger on arrival
     self.cooldown = math.max(self.cooldown, 0.25)
-    -- Engage arrival latch to suppress triggering until player exits all transition fixtures
-    self.arrivalLatch = true
-    self.arrivalOverlaps = {}
   end
 end
 
+-- Commented out arrival latch system (no longer needed for immediate transitions)
+--[[
 -- External: when called (right after a map switch), suppress transitions until the player exits
 function LevelTransitions:setArrivalLatch(flag)
   self.arrivalLatch = flag and true or false
   -- reset overlaps tracking whenever latch is set
   self.arrivalOverlaps = {}
 end
+--]]
 
 local function isPlayerFixture(LevelTransitions, fix)
   local pf = LevelTransitions.getPlayerFixture and LevelTransitions.getPlayerFixture() or nil
@@ -230,6 +232,70 @@ local function isPlayerFixture(LevelTransitions, fix)
   return false
 end
 
+-- Calculate spawn position on the appropriate side of destination transition box
+-- Preserves vertical offset from source bottom and positions horizontally based on entry direction
+local function calculateSpawnPosition(playerX, playerY, sourceObj, destObj, playerFixture)
+  -- Get actual player hitbox dimensions from the fixture
+  local playerWidth, playerHeight = 16, 16 -- fallback defaults
+  if playerFixture and playerFixture.getShape then
+    local shape = playerFixture:getShape()
+    if shape and shape.getType and shape:getType() == "polygon" then
+      -- For rectangle shape, get the actual dimensions
+      local points = {shape:getPoints()}
+      if #points >= 8 then -- rectangle has 8 points (4 corners * 2 coords each)
+        -- Calculate width and height from the points
+        local minX, maxX = math.huge, -math.huge
+        local minY, maxY = math.huge, -math.huge
+        for i = 1, #points, 2 do
+          local x, y = points[i], points[i+1]
+          minX, maxX = math.min(minX, x), math.max(maxX, x)
+          minY, maxY = math.min(minY, y), math.max(maxY, y)
+        end
+        playerWidth = (maxX - minX) * love.physics.getMeter()
+        playerHeight = (maxY - minY) * love.physics.getMeter()
+      end
+    end
+  end
+  
+  local srcLeft = sourceObj.x
+  local srcRight = sourceObj.x + sourceObj.width
+  local srcCenterX = sourceObj.x + sourceObj.width / 2
+  local srcBottom = sourceObj.y + sourceObj.height
+  
+  local dstLeft = destObj.x
+  local dstRight = destObj.x + destObj.width
+  local dstCenterX = destObj.x + destObj.width / 2
+  local dstBottom = destObj.y + destObj.height
+  
+  -- Calculate vertical offset from source bottom edge
+  local verticalOffset = playerY - srcBottom
+  
+  -- Determine entry side based on player position relative to source transition
+  local enteredFromLeft = playerX < srcCenterX
+  local enteredFromRight = playerX > srcCenterX
+  
+  local spawnX, spawnY
+  
+  -- Preserve vertical offset relative to destination bottom
+  spawnY = dstBottom + verticalOffset
+  
+  -- Calculate spawn position with minimal gap (1 pixel buffer to prevent collision)
+  local halfPlayerWidth = playerWidth / 2
+  local buffer = 1 -- minimal buffer to prevent immediate collision
+  
+  if enteredFromRight then
+    -- Player entered from right side, spawn on left side of destination
+    spawnX = dstLeft - halfPlayerWidth - buffer
+    print(string.format('[Transitions] Right-to-left: spawn at left side (%.1f, %.1f) - player width: %.1f', spawnX, spawnY, playerWidth))
+  else
+    -- Player entered from left side (or center), spawn on right side of destination  
+    spawnX = dstRight + halfPlayerWidth + buffer
+    print(string.format('[Transitions] Left-to-right: spawn at right side (%.1f, %.1f) - player width: %.1f', spawnX, spawnY, playerWidth))
+  end
+  
+  return spawnX, spawnY
+end
+
 -- World callbacks: call from map's beginContact/endContact
 function LevelTransitions:beginContact(a, b)
   -- Ignore during cooldown
@@ -237,74 +303,57 @@ function LevelTransitions:beginContact(a, b)
   local function touch(fixSensor, fixOther)
     if not isSensorFixture(fixSensor) then return end
     if not isPlayerFixture(self, fixOther) then return end
-    -- If we just arrived in a new map, ignore any begin contacts until player exits
-    if self.arrivalLatch then
-      self.arrivalOverlaps[fixSensor] = true
-      return
-    end
+    
     -- Is this a transition fixture?
     for name, entry in pairs(self.current) do
       if entry.fixture == fixSensor then
+        -- Get player position for spawn calculation
+        local meter = love.physics.getMeter()
+        local pfix = self.getPlayerFixture and self.getPlayerFixture() or nil
+        local px, py = 0, 0
+        if pfix and pfix.getBody then px, py = pfix:getBody():getPosition() end
+        px, py = px * meter, py * meter
+        
         -- Determine destination. First, per-object override via properties
         local props = entry.props or {}
         local overrideMap = props.destMap or props.dest or props.level or props.map
         local overrideName = props.destName or props.target or props.transition
         local switched = false
+        
         if overrideMap and self.switchLevel then
           local mapBase = normalizeMapBasePath(overrideMap)
           local targetName = overrideName or name
           local dx, dy, dobj = findDestInMap(mapBase, targetName)
-          if dx and dy then
+          if dx and dy and dobj then
             print(string.format('[Transitions] Override to %s at %s', tostring(mapBase), tostring(targetName)))
-            -- Preserve player's vertical offset from source bottom edge to destination bottom edge
-            local meter = love.physics.getMeter()
-            local pfix = self.getPlayerFixture and self.getPlayerFixture() or nil
-            local px, py = 0, 0
-            if pfix and pfix.getBody then px, py = pfix:getBody():getPosition() end
-            px, py = px * meter, py * meter
+            -- Calculate spawn position based on entry direction
             local src = entry.obj or { x = entry.x, y = entry.y, width = 0, height = 0 }
-            local srcBottom = (src.y or (entry.y or 0)) + (src.height or 0)
-            local offset = (py - srcBottom)
-            local dstBottom = (dobj and (dobj.y + dobj.height)) or dy
-            local ny = dstBottom + offset
-            self._queuedSwitch = { mapPath = mapBase, x = dx, y = ny }
+            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dobj, pfix)
+            self._queuedSwitch = { mapPath = mapBase, x = spawnX, y = spawnY }
             self.cooldown = 0.25
-            self.pending = nil
             switched = true
           else
-            -- If named destination not found in target map, still switch and keep player position
-            print(string.format('[Transitions] Override map %s has no %s; switching without teleport coords', tostring(mapBase), tostring(targetName)))
-            -- Use current entry.x/y as a fallback; destination coords may be off but better than nothing
+            -- If named destination not found in target map, still switch using center position
+            print(string.format('[Transitions] Override map %s has no %s; switching to center', tostring(mapBase), tostring(targetName)))
             local fx, fy = entry.x, entry.y
             self._queuedSwitch = { mapPath = mapBase, x = fx, y = fy }
             self.cooldown = 0.25
-            self.pending = nil
             switched = true
           end
         end
+        
         if not switched then
           -- Fallback to cross-map index built from names
           local dest = self.destinations[name]
           if dest and self.switchLevel then
-            -- Compute vertical offset from source bottom to destination bottom
-            local meter = love.physics.getMeter()
-            local pfix = self.getPlayerFixture and self.getPlayerFixture() or nil
-            local px, py = 0, 0
-            if pfix and pfix.getBody then px, py = pfix:getBody():getPosition() end
-            px, py = px * meter, py * meter
+            -- Calculate spawn position based on entry direction
             local src = entry.obj or { x = entry.x, y = entry.y, width = 0, height = 0 }
-            local srcBottom = (src.y or (entry.y or 0)) + (src.height or 0)
-            local offset = (py - srcBottom)
             local dst = dest.obj or { x = dest.x, y = dest.y, width = 0, height = 0 }
-            local dstBottom = (dst.y or dest.y or 0) + (dst.height or 0)
-            local ny = dstBottom + offset
-            self._queuedSwitch = { mapPath = dest.mapPath, x = dest.x, y = ny }
+            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dst, pfix)
+            self._queuedSwitch = { mapPath = dest.mapPath, x = spawnX, y = spawnY }
             self.cooldown = 0.25
-            self.pending = nil
           else
             print(string.format('[Transitions] No destination for %s', tostring(name)))
-            -- Fall back to pending-exit path in case destination becomes available later
-            self.pending = { name = name }
           end
         end
         break
@@ -315,6 +364,8 @@ function LevelTransitions:beginContact(a, b)
   touch(b, a)
 end
 
+-- Commented out endContact - no longer needed for immediate transitions
+--[[
 function LevelTransitions:endContact(a, b)
   -- If we're in arrival latch, track exits and clear latch when nothing overlaps
   if self.arrivalLatch then
@@ -356,5 +407,6 @@ function LevelTransitions:endContact(a, b)
   untouch(a, b)
   untouch(b, a)
 end
+--]]
 
 return LevelTransitions
