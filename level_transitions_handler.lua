@@ -232,68 +232,139 @@ local function isPlayerFixture(LevelTransitions, fix)
   return false
 end
 
--- Calculate spawn position on the appropriate side of destination transition box
--- Preserves vertical offset from source bottom and positions horizontally based on entry direction
-local function calculateSpawnPosition(playerX, playerY, sourceObj, destObj, playerFixture)
-  -- Get actual player hitbox dimensions from the fixture
-  local playerWidth, playerHeight = 16, 16 -- fallback defaults
-  if playerFixture and playerFixture.getShape then
-    local shape = playerFixture:getShape()
-    if shape and shape.getType and shape:getType() == "polygon" then
-      -- For rectangle shape, get the actual dimensions
-      local points = {shape:getPoints()}
-      if #points >= 8 then -- rectangle has 8 points (4 corners * 2 coords each)
-        -- Calculate width and height from the points
-        local minX, maxX = math.huge, -math.huge
-        local minY, maxY = math.huge, -math.huge
-        for i = 1, #points, 2 do
-          local x, y = points[i], points[i+1]
-          minX, maxX = math.min(minX, x), math.max(maxX, x)
-          minY, maxY = math.min(minY, y), math.max(maxY, y)
-        end
-        playerWidth = (maxX - minX) * love.physics.getMeter()
-        playerHeight = (maxY - minY) * love.physics.getMeter()
+-- Helper to get world points without relying on unpack/table.unpack (Lua version agnostic)
+local function getWorldPointsExpanded(body, pts)
+  local n = #pts
+  if n == 2 then return body:getWorldPoints(pts[1], pts[2]) end
+  if n == 4 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4]) end
+  if n == 6 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6]) end
+  if n == 8 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6], pts[7], pts[8]) end
+  if n == 10 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6], pts[7], pts[8], pts[9], pts[10]) end
+  if n == 12 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6], pts[7], pts[8], pts[9], pts[10], pts[11], pts[12]) end
+  if n == 14 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6], pts[7], pts[8], pts[9], pts[10], pts[11], pts[12], pts[13], pts[14]) end
+  if n == 16 then return body:getWorldPoints(pts[1], pts[2], pts[3], pts[4], pts[5], pts[6], pts[7], pts[8], pts[9], pts[10], pts[11], pts[12], pts[13], pts[14], pts[15], pts[16]) end
+  -- Fallback: no points
+  return nil
+end
+
+-- Compute an axis-aligned bounding box (AABB) for a fixture in pixel coordinates
+local function getFixtureAABBInPixels(fix)
+  if not fix or not fix.getShape or not fix.getBody then return nil end
+  local shape = fix:getShape()
+  if not shape then return nil end
+  local body = fix:getBody()
+  local meter = love.physics.getMeter()
+
+  local stype = (shape.getType and shape:getType()) or nil
+  if stype == 'circle' and shape.getRadius then
+    local cx, cy = body:getPosition()
+    local r = shape:getRadius()
+    cx, cy, r = cx * meter, cy * meter, r * meter
+    return cx - r, cy - r, cx + r, cy + r
+  end
+
+  -- For polygon/edge/chain, get world points and compute bounds
+  if shape.getPoints and body.getWorldPoints then
+    local pts = { shape:getPoints() }
+    if #pts >= 2 then
+      local wpts = { getWorldPointsExpanded(body, pts) }
+      local minX, minY = math.huge, math.huge
+      local maxX, maxY = -math.huge, -math.huge
+      for i = 1, #wpts, 2 do
+        local x, y = wpts[i] * meter, wpts[i + 1] * meter
+        if x < minX then minX = x end
+        if x > maxX then maxX = x end
+        if y < minY then minY = y end
+        if y > maxY then maxY = y end
       end
+      return minX, minY, maxX, maxY
     end
   end
-  
+
+  -- Fallback: use body position with a default 16px half-extent
+  local bx, by = body:getPosition()
+  bx, by = bx * meter, by * meter
+  return bx - 16, by - 16, bx + 16, by + 16
+end
+
+-- Get half extents (half-width, half-height) of fixture in pixels
+local function getFixtureHalfExtents(fix)
+  local minX, minY, maxX, maxY = getFixtureAABBInPixels(fix)
+  if not minX then return 16, 16 end
+  local hw = (maxX - minX) * 0.5
+  local hh = (maxY - minY) * 0.5
+  return hw, hh
+end
+
+-- Determine if a transition rectangle should be treated as horizontal (left/right) or vertical (up/down)
+-- Per spec: height > width -> horizontal transition, width > height -> vertical transition
+local function isHorizontalTransitionRect(obj)
+  local w = (obj and obj.width) or 0
+  local h = (obj and obj.height) or 0
+  return h > w
+end
+
+-- Horizontal transition placement (left/right)
+local function calculateSpawnPositionHorizontal(playerX, playerY, sourceObj, destObj, playerHalfWidth)
+  playerHalfWidth = playerHalfWidth or 16
   local srcLeft = sourceObj.x
-  local srcRight = sourceObj.x + sourceObj.width
   local srcCenterX = sourceObj.x + sourceObj.width / 2
   local srcBottom = sourceObj.y + sourceObj.height
-  
   local dstLeft = destObj.x
   local dstRight = destObj.x + destObj.width
-  local dstCenterX = destObj.x + destObj.width / 2
   local dstBottom = destObj.y + destObj.height
-  
-  -- Calculate vertical offset from source bottom edge
+
   local verticalOffset = playerY - srcBottom
-  
-  -- Determine entry side based on player position relative to source transition
-  local enteredFromLeft = playerX < srcCenterX
   local enteredFromRight = playerX > srcCenterX
-  
-  local spawnX, spawnY
-  
-  -- Preserve vertical offset relative to destination bottom
-  spawnY = dstBottom + verticalOffset
-  
-  -- Calculate spawn position with minimal gap (1 pixel buffer to prevent collision)
-  local halfPlayerWidth = playerWidth / 2
-  local buffer = 1 -- minimal buffer to prevent immediate collision
-  
+  local spawnY = dstBottom + verticalOffset
+  local gap = 1
+  local spawnX
   if enteredFromRight then
-    -- Player entered from right side, spawn on left side of destination
-    spawnX = dstLeft - halfPlayerWidth - buffer
-    print(string.format('[Transitions] Right-to-left: spawn at left side (%.1f, %.1f) - player width: %.1f', spawnX, spawnY, playerWidth))
+    spawnX = (dstLeft - gap) - playerHalfWidth
   else
-    -- Player entered from left side (or center), spawn on right side of destination  
-    spawnX = dstRight + halfPlayerWidth + buffer
-    print(string.format('[Transitions] Left-to-right: spawn at right side (%.1f, %.1f) - player width: %.1f', spawnX, spawnY, playerWidth))
+    spawnX = (dstRight + gap) + playerHalfWidth
   end
-  
   return spawnX, spawnY
+end
+
+-- Vertical transition placement (up/down)
+local function calculateSpawnPositionVertical(playerX, playerY, sourceObj, destObj, playerHalfWidth, playerHalfHeight)
+  playerHalfWidth = playerHalfWidth or 16
+  playerHalfHeight = playerHalfHeight or 16
+  local srcLeft = sourceObj.x
+  local srcCenterY = sourceObj.y + sourceObj.height / 2
+  local dstLeft = destObj.x
+  local dstTop = destObj.y
+  local dstBottom = destObj.y + destObj.height
+
+  -- Preserve horizontal offset from source left edge
+  local horizontalOffset = playerX - srcLeft
+  -- Clamp offset to stay within destination rectangle, leaving a tiny gap to edges
+  local gap = 1
+  local minOffset = playerHalfWidth + gap
+  local maxOffset = math.max(minOffset, (destObj.width or 0) - playerHalfWidth - gap)
+  horizontalOffset = math.max(minOffset, math.min(horizontalOffset, maxOffset))
+
+  local enteredFromBelow = playerY > srcCenterY
+  local spawnX = dstLeft + horizontalOffset
+  local spawnY
+  if enteredFromBelow then
+    -- Coming from below, appear just above the destination top edge
+    spawnY = (dstTop - gap) - playerHalfHeight
+  else
+    -- Coming from above, appear just below the destination bottom edge
+    spawnY = (dstBottom + gap) + playerHalfHeight
+  end
+  return spawnX, spawnY
+end
+
+-- Decide between horizontal/vertical and compute spawn position accordingly
+local function calculateSpawnPosition(playerX, playerY, sourceObj, destObj, playerHalfWidth, playerHalfHeight)
+  if isHorizontalTransitionRect(sourceObj) then
+    return calculateSpawnPositionHorizontal(playerX, playerY, sourceObj, destObj, playerHalfWidth)
+  else
+    return calculateSpawnPositionVertical(playerX, playerY, sourceObj, destObj, playerHalfWidth, playerHalfHeight)
+  end
 end
 
 -- World callbacks: call from map's beginContact/endContact
@@ -328,7 +399,13 @@ function LevelTransitions:beginContact(a, b)
             print(string.format('[Transitions] Override to %s at %s', tostring(mapBase), tostring(targetName)))
             -- Calculate spawn position based on entry direction
             local src = entry.obj or { x = entry.x, y = entry.y, width = 0, height = 0 }
-            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dobj, pfix)
+            local halfW, halfH = 16, 16
+            if pfix and pfix.getShape then
+              local hw, hh = getFixtureHalfExtents(pfix)
+              if hw then halfW = hw end
+              if hh then halfH = hh end
+            end
+            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dobj, halfW, halfH)
             self._queuedSwitch = { mapPath = mapBase, x = spawnX, y = spawnY }
             self.cooldown = 0.25
             switched = true
@@ -349,7 +426,13 @@ function LevelTransitions:beginContact(a, b)
             -- Calculate spawn position based on entry direction
             local src = entry.obj or { x = entry.x, y = entry.y, width = 0, height = 0 }
             local dst = dest.obj or { x = dest.x, y = dest.y, width = 0, height = 0 }
-            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dst, pfix)
+            local halfW, halfH = 16, 16
+            if pfix and pfix.getShape then
+              local hw, hh = getFixtureHalfExtents(pfix)
+              if hw then halfW = hw end
+              if hh then halfH = hh end
+            end
+            local spawnX, spawnY = calculateSpawnPosition(px, py, src, dst, halfW, halfH)
             self._queuedSwitch = { mapPath = dest.mapPath, x = spawnX, y = spawnY }
             self.cooldown = 0.25
           else

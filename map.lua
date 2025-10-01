@@ -10,6 +10,7 @@ local Chain = require("chain")
 local PlayerTextBox = require("player_text_box")
 local Sensors = require("sensor_handler")
 local LevelTransitions = require("level_transitions_handler")
+local DebugMenu = require("debugmenu")
 
 local Map = {}
 Map.__index = Map
@@ -376,6 +377,12 @@ function Map:_switchLevelAndTeleport(destMapPath, tx, ty)
   self:clean()
   -- Rebuild map fixtures for new level while keeping the same world and player
   self:init()
+
+  -- Update DebugMenu references so overlays (F2/F3/F5) use the new STI map/world
+  if DebugMenu and DebugMenu.init then
+    DebugMenu.init(state.world, state.level, state.player)
+    if DebugMenu.setMapOwner then DebugMenu.setMapOwner(Map) end
+  end
 
   -- Teleport player (pixels) and keep velocities
   local meter = love.physics.getMeter()

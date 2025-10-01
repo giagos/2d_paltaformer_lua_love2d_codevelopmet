@@ -14,15 +14,45 @@
         "": {
             "scaleInDock": 5.5
         },
-        "map/tmx/map3.tmx": {
-            "scale": 2.219140625,
-            "selectedLayer": 0,
+        "map/tmx/map2.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 319.943671888752,
-                "y": 184.08026755852845
+                "x": 308.6666666666667,
+                "y": 290.33333333333337
+            }
+        },
+        "map/tmx/map2.tmx#placeholder": {
+            "scaleInDock": 1
+        },
+        "map/tmx/map3.tmx": {
+            "expandedObjectLayers": [
+                2,
+                3
+            ],
+            "scale": 11,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 264.9090909090909,
+                "y": 341.1363636363636
             }
         },
         "map/tmx/map3.tmx#placeholder": {
+            "scaleInDock": 1
+        },
+        "map/tmx/map4.tmx": {
+            "expandedObjectLayers": [
+                2,
+                3
+            ],
+            "scale": 8,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 48,
+                "y": -0.4375
+            }
+        },
+        "map/tmx/map4.tmx#placeholder": {
             "scaleInDock": 1
         },
         "map/tmx/untitled.tmx": {
@@ -47,12 +77,6 @@
             "scaleInEditor": 1
         },
         "map/tsx/untitled.tmx": {
-            "expandedObjectLayers": [
-                4,
-                2,
-                5,
-                3
-            ],
             "scale": 2,
             "selectedLayer": 3,
             "viewCenter": {
@@ -64,14 +88,14 @@
             "scaleInDock": 5.5
         }
     },
-    "last.exportedFilePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
+    "last.exportedFilePath": "D:/2d_paltaformer_lua_love2d_codevelopmet/tiled/map",
     "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
-    "map.height": 23,
+    "map.height": 5,
     "map.lastUsedExportFilter": "Lua files (*.lua)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 40,
+    "map.width": 5,
     "openFiles": [
         "map/tmx/untitled.tmx",
         "map/tsx/placeholder.tsx"

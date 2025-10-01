@@ -72,9 +72,9 @@ function DebugMenu.drawScreen()
         love.graphics.pop()
     end
 
-    -- Transitions inspector (F6 + Shift)
+    -- Transitions inspector (F5)
     if state.showTransitions and DebugMenu.map then
-        local lines = { 'Transitions (current map)' }
+        local lines = {}
         local added = 0
         -- Try to read via transitions handler cache on Map
         local mapModule = DebugMenu.map -- STI map or Map.level
@@ -84,6 +84,15 @@ function DebugMenu.drawScreen()
             -- owner is likely Map; try to access its private state via known field
             transitionsState = owner and owner._getTransitions and owner:_getTransitions() or nil
         end
+        -- Header with current map path if available
+        local currentPath = nil
+        if transitionsState and transitionsState.destinations and transitionsState.destinations.__current then
+            currentPath = tostring(transitionsState.destinations.__current) .. '.lua'
+        elseif owner and owner.getCurrentLevel then
+            local ok, path = pcall(function() return owner:getCurrentLevel() end)
+            if ok and path then currentPath = tostring(path) .. '.lua' end
+        end
+        table.insert(lines, currentPath and ('Transitions (current map: ' .. currentPath .. ')') or 'Transitions (current map)')
         -- Fallback: scan box2d_collision for transitions layer
         local function pushLine(name, dest, candidates)
             local text

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="5" height="5" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="7">
+ <editorsettings>
+  <export target="../map4.lua" format="lua"/>
+ </editorsettings>
+ <tileset firstgid="1" name="placeholder" tilewidth="16" tileheight="16" tilecount="4" columns="2">
+  <image source="../../../asets/sprites/placeholder_box_set.png" width="32" height="32"/>
+ </tileset>
+ <tileset firstgid="5" name="placeholder" tilewidth="16" tileheight="16" tilecount="4" columns="2">
+  <image source="../../../asets/sprites/placeholder_box_set.png" width="32" height="32"/>
+ </tileset>
+ <layer id="1" name="Tile Layer 1" width="5" height="5">
+  <data encoding="csv">
+2,6,0,0,2,
+2,0,0,0,2,
+2,1,1,1,2,
+2,3,3,3,2,
+2,2,2,2,2
+</data>
+ </layer>
+ <objectgroup color="#ff0000" id="2" name="solid">
+  <properties>
+   <property name="collidable" type="bool" value="true"/>
+  </properties>
+  <object id="1" x="0" y="0" width="16" height="80"/>
+  <object id="2" x="16" y="32" width="48" height="48"/>
+  <object id="3" x="64" y="0" width="16" height="80"/>
+  <object id="6" x="16" y="0" width="16" height="16"/>
+ </objectgroup>
+ <objectgroup color="#00ffff" id="3" name="transitions">
+  <object id="5" name="transition3" x="32" y="-1.625" width="32" height="14.625"/>
+ </objectgroup>
+</map>

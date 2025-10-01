@@ -100,12 +100,17 @@ function DebugDraw.drawSensorsOverlay(map)
   if not map or not map.box2d_collision then return end
   local prevLineWidth = love.graphics.getLineWidth()
   love.graphics.setLineWidth(2)
-  love.graphics.setColor(0.1, 0.9, 1.0, 0.95) -- cyan
   for _, c in ipairs(map.box2d_collision) do
     if c.fixture and c.fixture.isSensor and c.fixture:isSensor() then
       local shape = c.fixture:getShape()
       local body = c.fixture:getBody()
       local st = shape:getType()
+      local isTransition = (c.object and c.object.layer and c.object.layer.name == 'transitions')
+      if isTransition then
+        love.graphics.setColor(1.0, 0.5, 0.0, 0.95) -- orange for transitions
+      else
+        love.graphics.setColor(0.1, 0.6, 1.0, 0.95) -- blue for regular sensors
+      end
       if st == 'polygon' or st == 'chain' then
         love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
       elseif st == 'edge' then
