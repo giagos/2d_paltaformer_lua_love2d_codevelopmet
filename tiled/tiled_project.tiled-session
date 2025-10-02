@@ -13,18 +13,21 @@
     ],
     "fileStates": {
         "": {
-            "scaleInDock": 2
+            "scaleInDock": 1
         },
         ":/automap-tiles.tsx": {
             "scaleInDock": 1
         },
         "map/tmx/map2.tmx": {
             "scale": 1.5,
-            "selectedLayer": 3,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 308.6666666666667,
-                "y": 290.33333333333337
+                "x": 270.66666666666663,
+                "y": 290.66666666666663
             }
+        },
+        "map/tmx/map2.tmx#OutsideGrassTileset": {
+            "scaleInDock": 1
         },
         "map/tmx/map2.tmx#placeholder": {
             "scaleInDock": 1
@@ -77,11 +80,11 @@
                 3,
                 2
             ],
-            "scale": 1,
+            "scale": 1.5,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 325,
-                "y": 108
+                "x": 200,
+                "y": 205.33333333333337
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -97,7 +100,7 @@
             "scaleInDock": 1
         },
         "map/tsx/OutsideGrassTileset.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 2
         },
         "map/tsx/placeholder.tsx": {
             "scaleInDock": 8,
@@ -108,7 +111,7 @@
             "selectedLayer": 3,
             "viewCenter": {
                 "x": 229,
-                "y": 298.75
+                "y": 299
             }
         },
         "map/tsx/untitled.tmx#placeholder": {
@@ -121,6 +124,10 @@
     ],
     "project": "tiled_project.tiled-project",
     "recentFiles": [
+        "map/tsx/untitled.tmx",
+        "map/tmx/map3.tmx",
+        "map/tmx/map2.tmx",
+        "map/tmx/map4.tmx",
         "map/tmx/rules/AutoTileRules.tmx",
         "map/tsx/placeholder.tsx",
         "map/tmx/untitled.tmx"
