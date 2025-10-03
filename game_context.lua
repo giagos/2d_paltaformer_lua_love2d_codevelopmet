@@ -43,6 +43,62 @@ function C.withLayerProps(name, fn)
   return nil
 end
 
+-- Internal: get the 'entity' layer object (by key or by name search)
+local function _getEntityLayer()
+  local lvl = C.level
+  if not (lvl and lvl.layers) then return nil end
+  if lvl.layers.entity then return lvl.layers.entity end
+  for _, layer in ipairs(lvl.layers) do
+    if layer and layer.name == 'entity' then return layer end
+  end
+  return nil
+end
+
+-- Get the entity object (from entity layer) by name
+-- opts.caseInsensitive: when true, compares lowercase names (default false)
+function C.getEntityObjectByName(name, opts)
+  local layer = _getEntityLayer()
+  if not (layer and layer.objects) then return nil end
+  local ci = opts and opts.caseInsensitive or false
+  for _, obj in ipairs(layer.objects) do
+    local on = obj and obj.name
+    if type(on) == 'string' then
+      if (ci and on:lower() == tostring(name):lower()) or (on == name) then
+        return obj
+      end
+    end
+  end
+  return nil
+end
+
+-- Get (and ensure) the properties table for a named entity object
+function C.getEntityObjectProperties(name, opts)
+  local obj = C.getEntityObjectByName(name, opts)
+  if not obj then return nil end
+  obj.properties = obj.properties or {}
+  return obj.properties
+end
+
+-- Set a property on a named entity object; returns new value or nil if not found
+function C.setEntityProp(name, key, value, opts)
+  local props = C.getEntityObjectProperties(name, opts)
+  if not props then return nil end
+  props[key] = value
+  return value
+end
+
+-- Increment a numeric property on a named entity object; returns new value or nil if not found
+function C.incrEntityProp(name, key, delta, opts)
+  delta = delta or 1
+  local props = C.getEntityObjectProperties(name, opts)
+  if not props then return nil end
+  local v = props[key]
+  if type(v) ~= 'number' then v = 0 end
+  v = v + delta
+  props[key] = v
+  return v
+end
+
 --[[
 USAGE EXAMPLE: Access Tiled layer properties (e.g., solid.collidable) inside box.lua
 

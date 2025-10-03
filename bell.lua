@@ -1,4 +1,6 @@
+---@diagnostic disable: undefined-global
 local sensors = require("sensor_handler")
+local GameContext = require("game_context")
 local bell = {}
 bell.__index = bell
 
@@ -27,6 +29,18 @@ function bell:load(world,x,y,w,h,opts)
 
     self.physics.fixture:setSensor(true)
     self.physics.fixture:setUserData({tag='bell'})
+
+    -- When sensor3 is hit (player enters), increment bell1.state by 1
+    -- Register safely even before Sensors.init by writing to _onEnter (preserved by Sensors.init)
+    sensors._onEnter = sensors._onEnter or {}
+    local prev = sensors._onEnter.sensor3
+    sensors._onEnter.sensor3 = function(name)
+        if prev then prev(name) end
+        local v = GameContext.incrEntityProp("bell1", "state", 1, { caseInsensitive = true })
+        if v ~= nil then
+            print(string.format("[bell] sensor3 ENTER -> bell1.state=%s", tostring(v)))
+        end
+    end
 end
 
 function bell:update(dt)

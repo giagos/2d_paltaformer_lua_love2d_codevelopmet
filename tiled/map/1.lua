@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 12,
-  nextobjectid = 42,
+  nextobjectid = 44,
   properties = {},
   tilesets = {
     {
@@ -501,6 +501,19 @@ return {
             ["sensor1"] = false,
             ["sensor2"] = true
           }
+        },
+        {
+          id = 43,
+          name = "sensor3",
+          type = "",
+          shape = "rectangle",
+          x = 55.0909,
+          y = 245.091,
+          width = 32,
+          height = 16,
+          rotation = 0,
+          visible = true,
+          properties = {}
         }
       }
     },

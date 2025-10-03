@@ -5,6 +5,7 @@
 -- F4: player info panel (screen-space)
 
 local DebugDraw = require("debugdraw")
+local GameContext = require("game_context")
 
 local DebugMenu = {}
 
@@ -57,18 +58,32 @@ function DebugMenu.drawScreen()
     -- FPS counter (independent of player or other panels)
     if state.showFPS then
         local fps = love.timer.getFPS()
-        local label = string.format("FPS: %d", fps)
+        local lines = { string.format("FPS: %d", fps) }
+        -- Try to read bell1.state via GameContext
+        local bellProps = GameContext and GameContext.getEntityObjectProperties and GameContext.getEntityObjectProperties("bell1") or nil
+        if bellProps and bellProps.state ~= nil then
+            table.insert(lines, string.format("bell1.state: %s", tostring(bellProps.state)))
+        end
+
+        -- Measure panel size
         local pad, lh = 6, 16
         local font = love.graphics.getFont()
-        local tw = font and font:getWidth(label) or 0
-        local th = lh
-        local x = love.graphics.getWidth() - tw - pad * 2 - 8
+        local w = 0
+        for _, line in ipairs(lines) do
+            local tw = font and font:getWidth(line) or 0
+            if tw > w then w = tw end
+        end
+        local h = lh * #lines
+        local x = love.graphics.getWidth() - w - pad * 2 - 8
         local y = 8
+
         love.graphics.push('all')
         love.graphics.setColor(0, 0, 0, 0.5)
-        love.graphics.rectangle('fill', x, y, tw + pad * 2, th + pad * 2, 4, 4)
+        love.graphics.rectangle('fill', x, y, w + pad * 2, h + pad * 2, 4, 4)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(label, x + pad, y + pad)
+        for i, line in ipairs(lines) do
+            love.graphics.print(line, x + pad, y + pad + (i - 1) * lh)
+        end
         love.graphics.pop()
     end
 
