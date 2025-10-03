@@ -6,9 +6,10 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
-        "map",
-        "map/tmx",
         ".",
+        "map/tmx",
+        "map/tmx/rules",
+        "map",
         "map/tsx"
     ],
     "fileStates": {
@@ -83,7 +84,7 @@
             "scale": 1.5,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 200,
+                "x": 316,
                 "y": 205.33333333333337
             }
         },
@@ -119,17 +120,16 @@
         }
     },
     "openFiles": [
-        "map/tmx/untitled.tmx",
-        "map/tsx/placeholder.tsx"
+        "map/tmx/untitled.tmx"
     ],
     "project": "tiled_project.tiled-project",
     "recentFiles": [
+        "map/tmx/untitled.tmx",
         "map/tsx/untitled.tmx",
         "map/tmx/map3.tmx",
         "map/tmx/map2.tmx",
         "map/tmx/map4.tmx",
         "map/tmx/rules/AutoTileRules.tmx",
-        "map/tsx/placeholder.tsx",
-        "map/tmx/untitled.tmx"
+        "map/tsx/placeholder.tsx"
     ]
 }
