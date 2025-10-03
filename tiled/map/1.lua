@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 12,
-  nextobjectid = 41,
+  nextobjectid = 42,
   properties = {},
   tilesets = {
     {
@@ -439,6 +439,21 @@ return {
           rotation = 0,
           visible = true,
           properties = {}
+        },
+        {
+          id = 41,
+          name = "bell1",
+          type = "",
+          shape = "rectangle",
+          x = 64,
+          y = 240,
+          width = 16,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["state"] = 0
+          }
         }
       }
     },

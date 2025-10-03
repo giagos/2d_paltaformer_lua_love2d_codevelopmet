@@ -7,6 +7,7 @@ local Player = require("player")
 local Ball = require("ball")
 local Box = require("box")
 local Chain = require("chain")
+local Bell = require("bell")
 local PlayerTextBox = require("player_text_box")
 local Sensors = require("sensor_handler")
 local LevelTransitions = require("level_transitions_handler")
@@ -27,6 +28,7 @@ local state = {
   playerTextBox = nil,
   balls = {},          -- spawned balls
   boxes = {},          -- spawned boxes
+  bells = {},
   chain = nil,
   chain2 = nil,
   mapWidth = 0,
@@ -44,6 +46,8 @@ local presets = {
   ball = {
     ball1 = { r = 8 },
     ball2 = { r = 12 },
+  },
+  bell = {bell1 = {w = 16, h = 32},
   }
 }
 
@@ -181,6 +185,7 @@ function Map:spawnEntities()
   -- Clear existing spawns if re-initializing
   state.balls = {}
   state.boxes = {}
+  state.bells = {}
 
   for _, obj in ipairs(layer.objects) do
     -- Center coordinates: always use the object's position + half-size for placement,
@@ -196,21 +201,32 @@ function Map:spawnEntities()
       goto continue
     end
 
-    -- Normalize the name (e.g., "Box1" -> "box1") for preset lookup
+    -- Normalize the name (e.g., "Box1" -> "box1") for preset lookup (exact match only)
     local rawName = obj.name or ""
     local name = rawName:lower():gsub("^%s*(.-)%s*$", "%1")
 
-    if obj.shape == 'rectangle' then
-      -- Use per-name preset width/height; fallback to a small box if unknown
-      local cfg = presets.box[name]
-      local w = (cfg and cfg.w) or 16
-      local h = (cfg and cfg.h) or 16
+    -- Spawn strictly by exact preset names, ignore Tiled shape type entirely
+    local bellCfg = presets.bell[name]
+    if bellCfg then
+      local w = bellCfg.w
+      local h = bellCfg.h
+      table.insert(state.bells, Bell.new(state.world, cx, cy, w, h))
+      goto continue
+    end
+
+    local boxCfg = presets.box[name]
+    if boxCfg then
+      local w = boxCfg.w
+      local h = boxCfg.h
       table.insert(state.boxes, Box.new(state.world, cx, cy, w, h, { type = 'dynamic', restitution = 0.2 }))
-    elseif obj.shape == 'ellipse' then
-      -- Use per-name preset radius; fallback to a small radius if unknown
-      local cfg = presets.ball[name]
-      local r = (cfg and cfg.r) or 8
+      goto continue
+    end
+
+    local ballCfg = presets.ball[name]
+    if ballCfg then
+      local r = ballCfg.r
       table.insert(state.balls, Ball.new(state.world, cx, cy, r, { restitution = 0.6, friction = 0.4 }))
+      goto continue
     end
 
     ::continue::
