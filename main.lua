@@ -13,6 +13,7 @@
  
 -- Game systems centralized in Map module
 local Map = require("map")
+local Camera = require("camera")
 local DebugMenu = require("debugmenu")
 
 -- No per-entity globals here; Map manages world/map/entities
@@ -39,10 +40,17 @@ end
 
 function love.update(dt)
 	Map:update(dt)
+	-- Smoothly follow the player with the camera rect
+	Camera.update(dt, Map:getPlayer())
 end
 
 function love.draw()
 	Map:draw()
+	-- Draw the non-filled camera rectangle in world space above entities
+	love.graphics.push()
+	love.graphics.scale(Map:getScale(), Map:getScale())
+	Camera.draw(Map:getPlayer())
+	love.graphics.pop()
 	-- Screen-space debug overlays after world draw
 	DebugMenu.drawScreen()
 end

@@ -12,6 +12,7 @@ local PlayerTextBox = require("player_text_box")
 local Sensors = require("sensor_handler")
 local LevelTransitions = require("level_transitions_handler")
 local DebugMenu = require("debugmenu")
+local GameContext = require("game_context")
 
 local Map = {}
 Map.__index = Map
@@ -239,6 +240,8 @@ function Map:init()
   local base = state.currentLevel or string.format("tiled/map/%d", state.currentLevelIndex or 1)
   local path = base:match("%.lua$") and base or (base .. ".lua")
   state.level = sti(path, { "box2d" })
+  -- Expose current level to shared context so modules can read layer properties
+  if GameContext and GameContext.setLevel then GameContext.setLevel(state.level) end
 
   -- Ensure sensor layers are collidable, then initialize Box2D colliders
   ensureSensorLayersCollidable(state.level)
@@ -307,6 +310,8 @@ function Map:load(scale)
   state.world = love.physics.newWorld(0, 1200)
   ---@diagnostic disable-next-line: undefined-field
   state.world:setCallbacks(beginContact, endContact)
+  -- Expose world to shared context
+  if GameContext and GameContext.setWorld then GameContext.setWorld(state.world) end
 
   -- Ensure numeric index and base path are in sync (user-facing pattern: currentLevelIndex)
   if not state.currentLevelIndex or state.currentLevelIndex < 1 then
@@ -393,6 +398,8 @@ function Map:_switchLevelAndTeleport(destMapPath, tx, ty)
   self:clean()
   -- Rebuild map fixtures for new level while keeping the same world and player
   self:init()
+  -- Update shared context with the new STI level
+  if GameContext and GameContext.setLevel then GameContext.setLevel(state.level) end
 
   -- Update DebugMenu references so overlays (F2/F3/F5) use the new STI map/world
   if DebugMenu and DebugMenu.init then
