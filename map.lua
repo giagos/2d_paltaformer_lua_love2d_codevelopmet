@@ -378,6 +378,7 @@ function Map:update(dt)
   if state.player and state.player.update then state.player:update(dt) end
   for _, b in ipairs(state.balls) do if b.update then b:update(dt) end end
   for _, b in ipairs(state.boxes) do if b.update then b:update(dt) end end
+  for _, b in ipairs(state.bells) do if b.update then b:update(dt) end end
   if state.chain and state.chain.update then state.chain:update(dt) end
   if state.chain2 and state.chain2.update then state.chain2:update(dt) end
   if state.playerTextBox and state.playerTextBox.update then state.playerTextBox:update(dt) end

@@ -6,6 +6,8 @@
 
 local DebugDraw = require("debugdraw")
 local GameContext = require("game_context")
+local Bell = require("bell")
+
 
 local DebugMenu = {}
 

@@ -4,6 +4,9 @@ local game_context = require("game_context")
 
 local anim8 = require("anim8")
 local spritesheet, animation_idle, animation_ring
+local animation_state = 'idle'
+local interact = false
+local e = false
 
 local bell = {}
 bell.__index = bell
@@ -40,30 +43,64 @@ function bell:load(world,x,y,w,h,opts)
     -- When sensor3 is hit (player enters), increment bell1.state by 1
     -- Register safely even before Sensors.init by writing to _onEnter (preserved by Sensors.init)
     sensors._onEnter = sensors._onEnter or {}
+    sensors._onExit = sensors._onExit or {}
     local prev = sensors._onEnter.sensor3
+
     sensors._onEnter.sensor3 = function(name)
-        if prev then prev(name) end
-        local v = game_context.incrEntityProp("bell1", "state", 1, { caseInsensitive = true })
+        e = true
+        print("in : %d",interact)
+    end
+    sensors._onExit.sensor3 = function(name)
+        e = false
+        print("out")
+    end
+end
+--THELW NA DOULEVEI. tha prepei na paizei mia fora to animation kathe fora pou pataei o paiktis to e kai to bell na min ginetai interactable
+-- episis tha prepei me kapion tropo na anagnorizei to short press(..1s unpress) apo to long(on delay) kai na mpenei antistoixa sto katalilo state
+function bell:ring() 
+    if e and interact then    
+        animation_state = 'l_ring'
+        --if prev then prev(name) end
+        local v = game_context.setEntityProp("bell1", "state", 1, { caseInsensitive = true })
+        print("perase")
         if v ~= nil then
-            print(string.format("[bell] sensor3 ENTER -> bell1.state=%s", tostring(v)))
+            --print(string.format("[bell] sensor3 ENTER -> bell1.state=%s", tostring(v)))
+        end
+    else
+        animation_state = 'idle'
+        --if prev then prev(name) end
+        local v = game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
+        if v ~= nil then
+            --print(string.format("[bell] sensor3 EXIT -> bell1.state=%s", tostring(v)))
         end
     end
 end
 
 function bell:update(dt)
-    self:syncPhysics()
+    interact = love.keyboard.isDown('e')
+    self:ring()
+    animation_idle:update(dt)
+    animation_ring:update(dt)
+    --self:syncPhysics()
 end
 
 function bell:loadAssets()
    spritesheet = love.graphics.newImage('asets/sprites/bell_spritesheet.png')
    local grid = anim8.newGrid(16, 32, spritesheet:getWidth(), spritesheet:getHeight())
-   animation_idle = anim8.newAnimation(grid('1-5',1), 0.09)
+   animation_idle = anim8.newAnimation(grid('1-5',1), 0.3)
    animation_ring = anim8.newAnimation(grid('6-11',1), 0.1)
 
 end
 
 function bell:draw()
-   animation_idle:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+    local props = game_context.getEntityObjectProperties("bell1")
+    if not props then return nil end
+    local state = props["state"]
+    if animation_state == 'l_ring' then
+        animation_ring:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+    else
+        animation_idle:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+    end
 end
 
 function bell:remove()

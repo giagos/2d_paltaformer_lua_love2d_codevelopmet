@@ -6,11 +6,11 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
-        ".",
+        "map/tsx",
         "map/tmx",
-        "map/tmx/rules",
+        ".",
         "map",
-        "map/tsx"
+        "map/tmx/rules"
     ],
     "fileStates": {
         "": {
@@ -76,16 +76,16 @@
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
+                3,
                 4,
                 5,
-                3,
                 2
             ],
             "scale": 1.5,
-            "selectedLayer": 7,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 316,
-                "y": 205.33333333333337
+                "x": 293.3333333333333,
+                "y": 255.99999999999997
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
