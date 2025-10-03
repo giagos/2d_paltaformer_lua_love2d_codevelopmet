@@ -1,6 +1,10 @@
 ---@diagnostic disable: undefined-global
 local sensors = require("sensor_handler")
-local GameContext = require("game_context")
+local game_context = require("game_context")
+
+local anim8 = require("anim8")
+local spritesheet, animation_idle, animation_ring
+
 local bell = {}
 bell.__index = bell
 
@@ -30,13 +34,16 @@ function bell:load(world,x,y,w,h,opts)
     self.physics.fixture:setSensor(true)
     self.physics.fixture:setUserData({tag='bell'})
 
+    --Animations
+    self:loadAssets()
+
     -- When sensor3 is hit (player enters), increment bell1.state by 1
     -- Register safely even before Sensors.init by writing to _onEnter (preserved by Sensors.init)
     sensors._onEnter = sensors._onEnter or {}
     local prev = sensors._onEnter.sensor3
     sensors._onEnter.sensor3 = function(name)
         if prev then prev(name) end
-        local v = GameContext.incrEntityProp("bell1", "state", 1, { caseInsensitive = true })
+        local v = game_context.incrEntityProp("bell1", "state", 1, { caseInsensitive = true })
         if v ~= nil then
             print(string.format("[bell] sensor3 ENTER -> bell1.state=%s", tostring(v)))
         end
@@ -47,18 +54,16 @@ function bell:update(dt)
     self:syncPhysics()
 end
 
-function bell:draw()
-    love.graphics.push()
-    love.graphics.translate(self.x, self.y)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.rectangle('fill', -self.w/2, -self.h/2, self.w, self.h)
-    love.graphics.setColor(0,0,0,0.9)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle('line', -self.w/2, -self.h/2, self.w, self.h)
+function bell:loadAssets()
+   spritesheet = love.graphics.newImage('asets/sprites/bell_spritesheet.png')
+   local grid = anim8.newGrid(16, 32, spritesheet:getWidth(), spritesheet:getHeight())
+   animation_idle = anim8.newAnimation(grid('1-5',1), 0.09)
+   animation_ring = anim8.newAnimation(grid('6-11',1), 0.1)
 
-    love.graphics.pop()
-    love.graphics.setColor(1,1,1,1)
-    --love.graphics.rectangle('fill',self.x-self.w/2,self.y-self.h/2,self.w, self.h)
+end
+
+function bell:draw()
+   animation_idle:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
 end
 
 function bell:remove()

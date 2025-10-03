@@ -472,6 +472,7 @@ function Map:draw()
   if state.chain2 and state.chain2.draw then state.chain2:draw() end
   for _, b in ipairs(state.balls) do if b.draw then b:draw() end end
   for _, b in ipairs(state.boxes) do if b.draw then b:draw() end end
+  for _, b in ipairs(state.bells) do if b.draw then b:draw() end end
   if state.player and state.player.draw then state.player:draw() end
 
   if state.playerTextBox and state.playerTextBox.draw then state.playerTextBox:draw() end
