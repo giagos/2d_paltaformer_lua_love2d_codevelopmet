@@ -4,7 +4,7 @@ local game_context = require("game_context")
 
 local anim8 = require("anim8")
 local Audio = require("audio")
-local spritesheet, animation_idle, animation_ring
+local spritesheet, animation_idle, animation_ring_short, animation_ring_long
 
 local bell = {}
 bell.__index = bell
@@ -70,10 +70,17 @@ function bell:_triggerRing(kind)
     -- reflect state in map properties (0=idle,1=short,2=long)
     local propVal = (kind == 'long') and 2 or 1
     game_context.setEntityProp("bell1", "state", propVal, { caseInsensitive = true })
-    -- restart ring animation from first frame
-    if animation_ring then
-        animation_ring:gotoFrame(1)
-        animation_ring:resume()
+    -- restart appropriate ring animation from first frame
+    if kind == 'long' then
+        if animation_ring_long then
+            animation_ring_long:gotoFrame(1)
+            animation_ring_long:resume()
+        end
+    else
+        if animation_ring_short then
+            animation_ring_short:gotoFrame(1)
+            animation_ring_short:resume()
+        end
     end
     -- Play sound once at trigger time via centralized audio
     if Audio and Audio.play then
@@ -122,21 +129,43 @@ function bell:update(dt)
         end
     end
 
-    -- Advance animations
-    if animation_idle then animation_idle:update(dt) end
-    if animation_ring then animation_ring:update(dt) end
+    -- Advance only the active animation to avoid unnecessary ticking
+    if self.isRinging or self.state == 'ringing_short' or self.state == 'ringing_long' then
+        if self.state == 'ringing_long' then
+            if animation_ring_long then animation_ring_long:update(dt) end
+            if animation_idle then animation_idle:pause() end
+            if animation_ring_short then animation_ring_short:pause() end
+        else -- ringing short
+            if animation_ring_short then animation_ring_short:update(dt) end
+            if animation_idle then animation_idle:pause() end
+            if animation_ring_long then animation_ring_long:pause() end
+        end
+    else
+        if animation_idle then animation_idle:resume(); animation_idle:update(dt) end
+        if animation_ring_short then animation_ring_short:pause() end
+        if animation_ring_long then animation_ring_long:pause() end
+    end
 end
 
 function bell:loadAssets()
    spritesheet = love.graphics.newImage('asets/sprites/bell_spritesheet.png')
    local grid = anim8.newGrid(16, 32, spritesheet:getWidth(), spritesheet:getHeight())
    animation_idle = anim8.newAnimation(grid('1-5',1), 0.3)
-   -- ring plays once; when it loops, pause at end and unlock interaction
-   animation_ring = anim8.newAnimation(grid('6-11',1), 0.1, function(anim)
-       -- when ring completes first loop, stop at last frame and reset bell to idle
+   -- Short ring: frames 6-11 (keep existing timing/behavior)
+   animation_ring_short = anim8.newAnimation(grid('6-11',1), 0.1, function(anim)
        anim:pauseAtEnd()
-       -- find active instance (single-bell assumption); unlock and reset
-       -- If multiple bells are added in the future, make animations instance-scoped
+       for _, b in ipairs(bell._active) do
+           if b.isRinging then
+               b.isRinging = false
+               b.state = 'idle'
+               game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
+               break
+           end
+       end
+   end)
+   -- Long ring: use frames 6-9 as requested
+   animation_ring_long = anim8.newAnimation(grid('6-9',1), 0.1, function(anim)
+       anim:pauseAtEnd()
        for _, b in ipairs(bell._active) do
            if b.isRinging then
                b.isRinging = false
@@ -151,8 +180,14 @@ function bell:loadAssets()
 end
 
 function bell:draw()
-    if self.state == 'ringing_short' or self.state == 'ringing_long' or self.isRinging then
-        animation_ring:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+    if self.state == 'ringing_long' then
+        if animation_ring_long then
+            animation_ring_long:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+        end
+    elseif self.state == 'ringing_short' or self.isRinging then
+        if animation_ring_short then
+            animation_ring_short:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
+        end
     else
         animation_idle:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
     end
