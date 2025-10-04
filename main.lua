@@ -15,6 +15,7 @@
 local Map = require("map")
 local Camera = require("camera")
 local DebugMenu = require("debugmenu")
+local Audio = require("audio")
 
 -- No per-entity globals here; Map manages world/map/entities
 
@@ -24,6 +25,9 @@ love.graphics.setDefaultFilter("nearest","nearest")
 function love.load()
 	-- Physics setup: 1 meter = 1 pixel so STI's pixel-based colliders match Box2D bodies
 	love.physics.setMeter(1)
+
+	-- Initialize audio registry
+	if Audio and Audio.init then Audio.init() end
 
 	-- Delegate all map/world/entity setup to Map
 	Map:load(2)

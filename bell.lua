@@ -3,8 +3,8 @@ local sensors = require("sensor_handler")
 local game_context = require("game_context")
 
 local anim8 = require("anim8")
+local Audio = require("audio")
 local spritesheet, animation_idle, animation_ring
-local ringSound
 
 local bell = {}
 bell.__index = bell
@@ -75,10 +75,13 @@ function bell:_triggerRing(kind)
         animation_ring:gotoFrame(1)
         animation_ring:resume()
     end
-    -- Play sound once at trigger time
-    if ringSound then
-        ringSound:stop()
-        ringSound:play()
+    -- Play sound once at trigger time via centralized audio
+    if Audio and Audio.play then
+        if kind == 'long' then
+            Audio.play('bell_ring_long', { restart = true })
+        else
+            Audio.play('bell_ring', { restart = true })
+        end
     end
 end
 
@@ -143,10 +146,7 @@ function bell:loadAssets()
            end
        end
    end)
-   -- Load ring sound (one-shot)
-   if not ringSound then
-       ringSound = love.audio.newSource('asets/sound/thud-sound-effect-405470.mp3', 'static')
-   end
+   -- Bell sound is managed by audio.lua; nothing to load here
 
 end
 
