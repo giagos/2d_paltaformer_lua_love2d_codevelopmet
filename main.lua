@@ -16,6 +16,7 @@ local Map = require("map")
 local Camera = require("camera")
 local DebugMenu = require("debugmenu")
 local Audio = require("audio")
+local SaveState = require("save_state")
 
 -- No per-entity globals here; Map manages world/map/entities
 
@@ -29,8 +30,18 @@ function love.load()
 	-- Initialize audio registry
 	if Audio and Audio.init then Audio.init() end
 
+	-- Initialize save system (separate from content). One slot for now.
+	SaveState.setPersistent(false) -- one-shot session: no disk writes
+	SaveState.init('save/slot1.lua') -- path kept for future; currently unused in session-only
+
 	-- Delegate all map/world/entity setup to Map
 	Map:load(2)
+
+	-- After Map loads, set current map id and apply any saved overrides.
+	-- We use the current level base path as the id (e.g., 'tiled/map/1').
+	local currentId = Map:getCurrentLevel()
+	SaveState.setCurrentMapId(currentId)
+	SaveState.applyToMapCurrent()
 
 	-- Initialize DebugMenu and hook into Map draw for world overlays
 	DebugMenu.init(Map:getWorld(), Map:getLevel(), Map:getPlayer())

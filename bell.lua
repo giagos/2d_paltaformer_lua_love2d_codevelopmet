@@ -4,6 +4,7 @@ local game_context = require("game_context")
 
 local anim8 = require("anim8")
 local Audio = require("audio")
+local SaveState = require("save_state")
 local spritesheet, animation_idle, animation_ring_short, animation_ring_long
 
 local bell = {}
@@ -128,6 +129,10 @@ function bell:_checkSequence(kind)
             -- Completed the sequence
             self.solved = true
             game_context.setEntityProp("bell1", "isSolved", true, { caseInsensitive = true })
+            -- Persist to save overlay so original map files remain untouched
+            SaveState.setEntityPropCurrent("bell1", "isSolved", true)
+            -- Session-only by default; call SaveState.save() only when persistence is enabled
+            if SaveState.persistent then SaveState.save() end
         end
     else
         -- Wrong input: reset pointer

@@ -13,6 +13,7 @@ local Sensors = require("sensor_handler")
 local LevelTransitions = require("level_transitions_handler")
 local DebugMenu = require("debugmenu")
 local GameContext = require("game_context")
+local SaveState = require("save_state")
 
 local Map = {}
 Map.__index = Map
@@ -242,6 +243,8 @@ function Map:init()
   state.level = sti(path, { "box2d" })
   -- Expose current level to shared context so modules can read layer properties
   if GameContext and GameContext.setLevel then GameContext.setLevel(state.level) end
+  -- Update SaveState current map id and apply saved overrides to this live level
+  SaveState.setCurrentMapId(base)
 
   -- Ensure sensor layers are collidable, then initialize Box2D colliders
   ensureSensorLayersCollidable(state.level)
@@ -300,6 +303,8 @@ function Map:init()
   MapWidth = state.mapWidth -- optional global for external use (matches your snippet)
 
   -- Spawn entities now that layers are ready
+  -- Apply saved overrides (e.g., isSolved flags) before spawning so spawners can react if needed
+  SaveState.applyToMapCurrent()
   self:spawnEntities()
 end
 
@@ -401,6 +406,9 @@ function Map:_switchLevelAndTeleport(destMapPath, tx, ty)
   self:init()
   -- Update shared context with the new STI level
   if GameContext and GameContext.setLevel then GameContext.setLevel(state.level) end
+  -- Update SaveState current map id and re-apply saved overrides on the new map
+  SaveState.setCurrentMapId(destMapPath)
+  SaveState.applyToMapCurrent()
 
   -- Update DebugMenu references so overlays (F2/F3/F5) use the new STI map/world
   if DebugMenu and DebugMenu.init then
