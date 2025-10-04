@@ -4,9 +4,6 @@ local game_context = require("game_context")
 
 local anim8 = require("anim8")
 local spritesheet, animation_idle, animation_ring
-local animation_state = 'idle'
-local interact = false
-local e = false
 
 local bell = {}
 bell.__index = bell
@@ -39,64 +36,112 @@ function bell:load(world,x,y,w,h,opts)
 
     --Animations
     self:loadAssets()
+    -- Interaction / state machine
+    self.state = 'idle'                -- 'idle' | 'ringing_short' | 'ringing_long'
+    self.isRinging = false             -- lock while animation plays
+    self.inZone = false                -- set by sensor3 enter/exit
+    self.inputDown = false             -- is 'E' currently held
+    self.inputDownTime = 0             -- how long E has been held
+    self.inputTriggeredLong = false    -- has long action fired while held
+    self.longPressThreshold = 1.0      -- seconds to consider a long press
 
     -- When sensor3 is hit (player enters), increment bell1.state by 1
     -- Register safely even before Sensors.init by writing to _onEnter (preserved by Sensors.init)
     sensors._onEnter = sensors._onEnter or {}
     sensors._onExit = sensors._onExit or {}
-    local prev = sensors._onEnter.sensor3
-
+    local this = self
     sensors._onEnter.sensor3 = function(name)
-        e = true
-        print("in : %d",interact)
+        this.inZone = true
     end
     sensors._onExit.sensor3 = function(name)
-        e = false
-        print("out")
+        this.inZone = false
+        -- cancel any pending press tracking when leaving zone
+        this.inputDown = false
+        this.inputDownTime = 0
+        this.inputTriggeredLong = false
     end
 end
---THELW NA DOULEVEI. tha prepei na paizei mia fora to animation kathe fora pou pataei o paiktis to e kai to bell na min ginetai interactable
--- episis tha prepei me kapion tropo na anagnorizei to short press(..1s unpress) apo to long(on delay) kai na mpenei antistoixa sto katalilo state
-function bell:ring() 
-    if e and interact then    
-        animation_state = 'l_ring'
-        --if prev then prev(name) end
-        local v = game_context.setEntityProp("bell1", "state", 1, { caseInsensitive = true })
-        print("perase")
-        if v ~= nil then
-            --print(string.format("[bell] sensor3 ENTER -> bell1.state=%s", tostring(v)))
-        end
-    else
-        animation_state = 'idle'
-        --if prev then prev(name) end
-        local v = game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
-        if v ~= nil then
-            --print(string.format("[bell] sensor3 EXIT -> bell1.state=%s", tostring(v)))
-        end
+-- Trigger ring once and lock interaction until animation completes
+function bell:_triggerRing(kind)
+    if self.isRinging then return end
+    self.isRinging = true
+    self.state = (kind == 'long') and 'ringing_long' or 'ringing_short'
+    -- reflect state in map properties (0=idle,1=short,2=long)
+    local propVal = (kind == 'long') and 2 or 1
+    game_context.setEntityProp("bell1", "state", propVal, { caseInsensitive = true })
+    -- restart ring animation from first frame
+    if animation_ring then
+        animation_ring:gotoFrame(1)
+        animation_ring:resume()
     end
 end
 
 function bell:update(dt)
-    interact = love.keyboard.isDown('e')
-    self:ring()
-    animation_idle:update(dt)
-    animation_ring:update(dt)
-    --self:syncPhysics()
+    -- Update input edge detection for 'E' while inside sensor3 zone
+    local down = love.keyboard.isDown('e')
+    if self.inZone and (not self.isRinging) then
+        -- key down edge
+        if down and not self.inputDown then
+            self.inputDown = true
+            self.inputDownTime = 0
+            self.inputTriggeredLong = false
+        end
+        -- while held: accumulate and trigger long once when threshold passed
+        if self.inputDown and down then
+            self.inputDownTime = self.inputDownTime + dt
+            if (not self.inputTriggeredLong) and self.inputDownTime >= self.longPressThreshold then
+                self.inputTriggeredLong = true
+                self:_triggerRing('long')
+            end
+        end
+        -- key release edge
+        if self.inputDown and (not down) then
+            if not self.inputTriggeredLong then
+                -- short press
+                self:_triggerRing('short')
+            end
+            self.inputDown = false
+            self.inputDownTime = 0
+            self.inputTriggeredLong = false
+        end
+    else
+        -- Not in zone or currently ringing: ignore & reset edge tracking on release
+        if not down then
+            self.inputDown = false
+            self.inputDownTime = 0
+            self.inputTriggeredLong = false
+        end
+    end
+
+    -- Advance animations
+    if animation_idle then animation_idle:update(dt) end
+    if animation_ring then animation_ring:update(dt) end
 end
 
 function bell:loadAssets()
    spritesheet = love.graphics.newImage('asets/sprites/bell_spritesheet.png')
    local grid = anim8.newGrid(16, 32, spritesheet:getWidth(), spritesheet:getHeight())
    animation_idle = anim8.newAnimation(grid('1-5',1), 0.3)
-   animation_ring = anim8.newAnimation(grid('6-11',1), 0.1)
+   -- ring plays once; when it loops, pause at end and unlock interaction
+   animation_ring = anim8.newAnimation(grid('6-11',1), 0.1, function(anim)
+       -- when ring completes first loop, stop at last frame and reset bell to idle
+       anim:pauseAtEnd()
+       -- find active instance (single-bell assumption); unlock and reset
+       -- If multiple bells are added in the future, make animations instance-scoped
+       for _, b in ipairs(bell._active) do
+           if b.isRinging then
+               b.isRinging = false
+               b.state = 'idle'
+               game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
+               break
+           end
+       end
+   end)
 
 end
 
 function bell:draw()
-    local props = game_context.getEntityObjectProperties("bell1")
-    if not props then return nil end
-    local state = props["state"]
-    if animation_state == 'l_ring' then
+    if self.state == 'ringing_short' or self.state == 'ringing_long' or self.isRinging then
         animation_ring:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
     else
         animation_idle:draw(spritesheet, self.x, self.y, 0, 1, 1, self.w, self.h/2)
