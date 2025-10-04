@@ -82,7 +82,7 @@ return {
       id = 1,
       name = "Tile Layer 1",
       class = "",
-      visible = true,
+      visible = false,
       opacity = 1,
       offsetx = 0,
       offsety = 0,

@@ -35,8 +35,8 @@
         },
         "map/tmx/map3.tmx": {
             "expandedObjectLayers": [
-                3,
-                2
+                2,
+                3
             ],
             "scale": 1,
             "selectedLayer": 3,
@@ -53,8 +53,8 @@
         },
         "map/tmx/map4.tmx": {
             "expandedObjectLayers": [
-                3,
-                2
+                2,
+                3
             ],
             "scale": 2,
             "selectedLayer": 2,
@@ -68,24 +68,24 @@
         },
         "map/tmx/rules/AutoTileRules.tmx": {
             "scale": 2,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 240,
-                "y": 225.5
+                "x": 160.5,
+                "y": 357.5
             }
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
-                3,
+                2,
                 4,
                 5,
-                2
+                3
             ],
-            "scale": 1.5,
-            "selectedLayer": 4,
+            "scale": 2,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 293.3333333333333,
-                "y": 255.99999999999997
+                "x": 331,
+                "y": 211.5
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -125,12 +125,12 @@
     "project": "tiled_project.tiled-project",
     "property.type": "int",
     "recentFiles": [
+        "map/tmx/rules/AutoTileRules.tmx",
         "map/tmx/untitled.tmx",
         "map/tsx/untitled.tmx",
         "map/tmx/map3.tmx",
         "map/tmx/map2.tmx",
         "map/tmx/map4.tmx",
-        "map/tmx/rules/AutoTileRules.tmx",
         "map/tsx/placeholder.tsx"
     ]
 }
