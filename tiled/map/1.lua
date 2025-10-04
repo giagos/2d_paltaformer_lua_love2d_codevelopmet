@@ -495,7 +495,8 @@ return {
           rotation = 0,
           visible = true,
           properties = {
-            ["state"] = 0
+            ["code"] = "LSLSLSLS",
+            ["isSolved"] = false
           }
         }
       }

@@ -61,10 +61,10 @@ function DebugMenu.drawScreen()
     if state.showFPS then
         local fps = love.timer.getFPS()
         local lines = { string.format("FPS: %d", fps) }
-        -- Try to read bell1.state via GameContext
+        -- Read bell1.isSolved via GameContext
         local bellProps = GameContext and GameContext.getEntityObjectProperties and GameContext.getEntityObjectProperties("bell1") or nil
-        if bellProps and bellProps.state ~= nil then
-            table.insert(lines, string.format("bell1.state: %s", tostring(bellProps.state)))
+        if bellProps and bellProps.isSolved ~= nil then
+            table.insert(lines, string.format("bell1.isSolved: %s", tostring(bellProps.isSolved)))
         end
 
         -- Measure panel size

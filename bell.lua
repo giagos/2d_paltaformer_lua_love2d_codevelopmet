@@ -46,6 +46,11 @@ function bell:load(world,x,y,w,h,opts)
     self.inputTriggeredLong = false    -- has long action fired while held
     self.longPressThreshold = 1.0      -- seconds to consider a long press
 
+    -- Code sequence logic (L/S) and progress pointer
+    self.codeSeq = {}
+    self.seqIndex = 1
+    self.solved = false
+
     -- When sensor3 is hit (player enters), increment bell1.state by 1
     -- Register safely even before Sensors.init by writing to _onEnter (preserved by Sensors.init)
     sensors._onEnter = sensors._onEnter or {}
@@ -61,15 +66,35 @@ function bell:load(world,x,y,w,h,opts)
         this.inputDownTime = 0
         this.inputTriggeredLong = false
     end
+
+    -- Load code and initial solved state from bell1 custom properties
+    self:_loadCodeFromProps()
+end
+
+-- Read bell1 properties 'code' (string of L/S) and 'isSolved' (boolean)
+function bell:_loadCodeFromProps()
+    local props = game_context.getEntityObjectProperties("bell1")
+    local codeStr = props and props.code
+    self.codeSeq = {}
+    if type(codeStr) == 'string' then
+        for ch in codeStr:gmatch('.') do
+            local c = ch:upper()
+            if c == 'L' or c == 'S' then table.insert(self.codeSeq, c) end
+        end
+    end
+    -- If no code provided, consider solved (or keep false if you prefer requiring at least one input)
+    self.solved = (props and props.isSolved == true) or (#self.codeSeq == 0)
+    self.seqIndex = 1
 end
 -- Trigger ring once and lock interaction until animation completes
 function bell:_triggerRing(kind)
     if self.isRinging then return end
+    if self.solved then return end
     self.isRinging = true
     self.state = (kind == 'long') and 'ringing_long' or 'ringing_short'
-    -- reflect state in map properties (0=idle,1=short,2=long)
-    local propVal = (kind == 'long') and 2 or 1
-    game_context.setEntityProp("bell1", "state", propVal, { caseInsensitive = true })
+
+    -- Check sequence progress (L/S) and update pointer/solved
+    self:_checkSequence(kind)
     -- restart appropriate ring animation from first frame
     if kind == 'long' then
         if animation_ring_long then
@@ -92,10 +117,28 @@ function bell:_triggerRing(kind)
     end
 end
 
+-- Compare the pressed kind ('long'|'short') against expected step and advance/reset pointer
+function bell:_checkSequence(kind)
+    local expected = self.codeSeq[self.seqIndex]
+    if not expected then return end
+    local actual = (kind == 'long') and 'L' or 'S'
+    if actual == expected then
+        self.seqIndex = self.seqIndex + 1
+        if self.seqIndex > #self.codeSeq then
+            -- Completed the sequence
+            self.solved = true
+            game_context.setEntityProp("bell1", "isSolved", true, { caseInsensitive = true })
+        end
+    else
+        -- Wrong input: reset pointer
+        self.seqIndex = 1
+    end
+end
+
 function bell:update(dt)
     -- Update input edge detection for 'E' while inside sensor3 zone
     local down = love.keyboard.isDown('e')
-    if self.inZone and (not self.isRinging) then
+    if self.inZone and (not self.isRinging) and (not self.solved) then
         -- key down edge
         if down and not self.inputDown then
             self.inputDown = true
@@ -151,26 +194,24 @@ function bell:loadAssets()
    spritesheet = love.graphics.newImage('asets/sprites/bell_spritesheet.png')
    local grid = anim8.newGrid(16, 32, spritesheet:getWidth(), spritesheet:getHeight())
    animation_idle = anim8.newAnimation(grid('1-5',1), 0.3)
-   -- Short ring: frames 6-11 (keep existing timing/behavior)
-   animation_ring_short = anim8.newAnimation(grid('6-11',1), 0.1, function(anim)
+   -- Short ring: frames 6-9
+   animation_ring_short = anim8.newAnimation(grid('6-9',1), 0.1, function(anim)
        anim:pauseAtEnd()
        for _, b in ipairs(bell._active) do
            if b.isRinging then
                b.isRinging = false
                b.state = 'idle'
-               game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
                break
            end
        end
    end)
-   -- Long ring: use frames 6-9 as requested
-   animation_ring_long = anim8.newAnimation(grid('6-9',1), 0.1, function(anim)
+   -- Long ring: frames 6-11
+   animation_ring_long = anim8.newAnimation(grid('6-11',1), 0.1, function(anim)
        anim:pauseAtEnd()
        for _, b in ipairs(bell._active) do
            if b.isRinging then
                b.isRinging = false
                b.state = 'idle'
-               game_context.setEntityProp("bell1", "state", 0, { caseInsensitive = true })
                break
            end
        end

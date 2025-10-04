@@ -123,7 +123,7 @@
         "map/tmx/untitled.tmx"
     ],
     "project": "tiled_project.tiled-project",
-    "property.type": "int",
+    "property.type": "string",
     "recentFiles": [
         "map/tmx/rules/AutoTileRules.tmx",
         "map/tmx/untitled.tmx",

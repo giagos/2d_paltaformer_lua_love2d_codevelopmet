@@ -129,7 +129,8 @@
   <object id="33" name="box2" x="360.682" y="243.045" width="27.6364" height="26.9091"/>
   <object id="41" name="bell1" x="64" y="240" width="16" height="32">
    <properties>
-    <property name="state" type="int" value="0"/>
+    <property name="code" value="LSLSLSLS"/>
+    <property name="isSolved" type="bool" value="false"/>
    </properties>
   </object>
  </objectgroup>
