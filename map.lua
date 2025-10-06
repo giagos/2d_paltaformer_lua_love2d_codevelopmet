@@ -38,28 +38,9 @@ local state = {
   transitions = nil,
 }
 
--- Deprecated: presets table is superseded by data/spawn_registry.lua and the Spawner.
--- Kept temporarily for reference; no longer used by spawnEntities().
-local presets = {
-  box = {
-    box1 = { w = 16, h = 16 },
-    box2 = { w = 28, h = 28 },
-  },
-  ball = {
-    ball1 = { r = 8 },
-    ball2 = { r = 12 },
-  },
-  bell = {bell1 = {w = 16, h = 32},
-  }
-}
+-- (presets removed; use data/spawn_registry.lua)
 
--- Optional registry to spawn custom types (future-proofing): spikes/stone/enemy/coin
--- You can register from anywhere: Map.registerTypeSpawner("coin", function(cx, cy, obj) Coin.new(cx, cy) end)
-local typeSpawners = {}
-
-function Map.registerTypeSpawner(t, fn)
-  typeSpawners[t] = fn
-end
+-- Legacy type spawner registry removed in favor of spawning/spawner.lua + data registry.
 
 -- Public accessors used by main.lua (for debug and overlays handled in main)
 function Map:getWorld() return state.world end

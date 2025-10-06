@@ -25,13 +25,9 @@ return {
     }
   },
 
-  -- Matching rules. Prefer object.type; fall back to name prefixes for legacy maps.
+  -- Matching rules: name-based only. Variant is derived from the full object name, and must exist.
+  -- Example: name "box2" → type=box, variant="box2" (exact variant required or the object is skipped).
   rules = {
-    { when = { type = 'box'  },  type = 'box',  variant = { fromName = true } },
-    { when = { type = 'ball' },  type = 'ball', variant = { fromName = true } },
-    { when = { type = 'bell' },  type = 'bell', variant = { fromName = true } },
-
-    -- Fallbacks by name prefix (e.g., name "box2" → type=box, variant="box2")
     { when = { namePrefix = 'box'  }, type = 'box',  variant = { fromName = true } },
     { when = { namePrefix = 'ball' }, type = 'ball', variant = { fromName = true } },
     { when = { namePrefix = 'bell' }, type = 'bell', variant = { fromName = true } },
