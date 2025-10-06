@@ -14,6 +14,7 @@ local LevelTransitions = require("level_transitions_handler")
 local DebugMenu = require("debugmenu")
 local GameContext = require("game_context")
 local SaveState = require("save_state")
+local Spawner = require("spawning.spawner")
 
 local Map = {}
 Map.__index = Map
@@ -37,9 +38,8 @@ local state = {
   transitions = nil,
 }
 
--- Preset sizes by name for simple variants. Edit here to change once for all.
--- Example: every Tiled object named "box1" uses the same width/height, regardless of
--- the object's drawn size in Tiled. Same idea for "box2", "ball1", "ball2".
+-- Deprecated: presets table is superseded by data/spawn_registry.lua and the Spawner.
+-- Kept temporarily for reference; no longer used by spawnEntities().
 local presets = {
   box = {
     box1 = { w = 16, h = 16 },
@@ -189,50 +189,16 @@ function Map:spawnEntities()
   state.boxes = {}
   state.bells = {}
 
-  for _, obj in ipairs(layer.objects) do
-    -- Center coordinates: always use the object's position + half-size for placement,
-    -- but NEVER use the object's width/height as the physics size for balls/boxes.
-    local ox, oy = obj.x, obj.y
-    local ow, oh = obj.width or 0, obj.height or 0
-    local cx, cy = ox + ow / 2, oy + oh / 2
+  -- Use registry-driven spawner
+  local results = Spawner.spawn(state.world, layer.objects, {
+    registry = require('data.spawn_registry'),
+    level = level,
+    map = self,
+  })
 
-    -- Future entities: if obj.type is set, dispatch to registered spawner.
-    if obj.type and obj.type ~= "" then
-      local spawner = typeSpawners[obj.type]
-      if spawner then spawner(cx, cy, obj) end
-      goto continue
-    end
-
-    -- Normalize the name (e.g., "Box1" -> "box1") for preset lookup (exact match only)
-    local rawName = obj.name or ""
-    local name = rawName:lower():gsub("^%s*(.-)%s*$", "%1")
-
-    -- Spawn strictly by exact preset names, ignore Tiled shape type entirely
-    local bellCfg = presets.bell[name]
-    if bellCfg then
-      local w = bellCfg.w
-      local h = bellCfg.h
-      table.insert(state.bells, Bell.new(state.world, cx, cy, w, h))
-      goto continue
-    end
-
-    local boxCfg = presets.box[name]
-    if boxCfg then
-      local w = boxCfg.w
-      local h = boxCfg.h
-      table.insert(state.boxes, Box.new(state.world, cx, cy, w, h, { type = 'dynamic', restitution = 0.2 }))
-      goto continue
-    end
-
-    local ballCfg = presets.ball[name]
-    if ballCfg then
-      local r = ballCfg.r
-      table.insert(state.balls, Ball.new(state.world, cx, cy, r, { restitution = 0.6, friction = 0.4 }))
-      goto continue
-    end
-
-    ::continue::
-  end
+  state.boxes = results.boxes or {}
+  state.balls = results.balls or {}
+  state.bells = results.bells or {}
 end
 
 -- Initialize map/layers and spawn entities (pattern similar to your example)
