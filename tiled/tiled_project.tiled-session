@@ -6,11 +6,11 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
-        "map/tsx",
-        "map/tmx",
         ".",
+        "map/tmx/rules",
         "map",
-        "map/tmx/rules"
+        "map/tsx",
+        "map/tmx"
     ],
     "fileStates": {
         "": {
@@ -23,8 +23,8 @@
             "scale": 1.5,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 270.66666666666663,
-                "y": 290.66666666666663
+                "x": 320,
+                "y": 183.66666666666663
             }
         },
         "map/tmx/map2.tmx#OutsideGrassTileset": {
@@ -35,14 +35,14 @@
         },
         "map/tmx/map3.tmx": {
             "expandedObjectLayers": [
-                2,
-                3
+                3,
+                2
             ],
             "scale": 1,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 421,
-                "y": 137
+                "x": 320,
+                "y": 183.5
             }
         },
         "map/tmx/map3.tmx#OutsideGrassTileset": {
@@ -53,14 +53,14 @@
         },
         "map/tmx/map4.tmx": {
             "expandedObjectLayers": [
-                2,
-                3
+                3,
+                2
             ],
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 89,
-                "y": 49.5
+                "x": 52.5,
+                "y": 39.75
             }
         },
         "map/tmx/map4.tmx#placeholder": {
@@ -71,21 +71,21 @@
             "selectedLayer": 1,
             "viewCenter": {
                 "x": 160.5,
-                "y": 357.5
+                "y": 27.5
             }
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
-                2,
                 4,
-                5,
-                3
+                3,
+                2,
+                5
             ],
-            "scale": 2,
-            "selectedLayer": 2,
+            "scale": 1.5,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 331,
-                "y": 211.5
+                "x": 316,
+                "y": 218.66666666666663
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -93,6 +93,9 @@
         },
         "map/tmx/untitled.tmx#OutsideGrassTileset": {
             "scaleInDock": 2
+        },
+        "map/tmx/untitled.tmx#bell_pillar": {
+            "scaleInDock": 1
         },
         "map/tmx/untitled.tmx#placeholder": {
             "scaleInDock": 1
@@ -102,6 +105,10 @@
         },
         "map/tsx/OutsideGrassTileset.tsx": {
             "scaleInDock": 2
+        },
+        "map/tsx/bell_pillar.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
         },
         "map/tsx/placeholder.tsx": {
             "scaleInDock": 8,
@@ -119,18 +126,30 @@
             "scaleInDock": 5.5
         }
     },
+    "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
     "openFiles": [
-        "map/tmx/untitled.tmx"
+        "map/tmx/untitled.tmx",
+        "map/tmx/map4.tmx",
+        "map/tmx/map2.tmx",
+        "map/tmx/map3.tmx",
+        "map/tsx/bell_pillar.tsx",
+        "map/tmx/rules/AutoTileRules.tmx"
     ],
     "project": "tiled_project.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "map/tmx/rules/AutoTileRules.tmx",
-        "map/tmx/untitled.tmx",
-        "map/tsx/untitled.tmx",
+        "map/tsx/bell_pillar.tsx",
         "map/tmx/map3.tmx",
         "map/tmx/map2.tmx",
         "map/tmx/map4.tmx",
+        "map/tmx/untitled.tmx",
+        "map/tsx/untitled.tmx",
         "map/tsx/placeholder.tsx"
-    ]
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
 }
