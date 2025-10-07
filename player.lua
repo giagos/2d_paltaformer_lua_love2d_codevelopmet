@@ -4,6 +4,7 @@
 -- - Handles left/right movement, friction, gravity, and jumping
 -- - Detects grounding via world contact callbacks using collision normals
 local Player = {}
+local PlayerData = require('data.player_data')
 local spritesheet, animation_idle, animation_walk, animation_jump, animation_fall
 local drawscale = 1
 local xdirection = "no"
@@ -13,55 +14,55 @@ local ydirection = "no"
 local anim8 = require("anim8")
 
 function Player:load(world, x, y)
-   -- Dimensions and spawn
-   self.x = 100
-   self.y = 0
-   self.width = 8
-   self.height = 16
+   -- Dimensions and spawn (from data)
+   self.x = PlayerData.spawn.x
+   self.y = PlayerData.spawn.y
+   self.width = PlayerData.size.width
+   self.height = PlayerData.size.height
 
    -- Kinematics and tuning
    self.xVel = 0
    self.yVel = 0
-   self.maxSpeed = 100
-   self.maxySpeed = 2000
-   self.acceleration = 2000
-   self.friction = 3400
-   self.gravity = 1500
-   self.jumpAmount = -340
+   self.maxSpeed = PlayerData.movement.maxSpeed
+   self.maxySpeed = PlayerData.movement.maxYSpeed
+   self.acceleration = PlayerData.movement.acceleration
+   self.friction = PlayerData.movement.friction
+   self.gravity = PlayerData.movement.gravity
+   self.jumpAmount = PlayerData.movement.jumpAmount
    self.grounded = false
    self.groundContacts = 0
 
    --Animations
    self:loadAssets()
 
-   self.color = {0.9, 0.3, 0.3, 1}
+   self.color = PlayerData.color
 
    local meter = love.physics.getMeter() -- (1 pixel per meter)
    self.physics = {}
    -- Body at center (Box2D origin at shape center)
-   self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, "dynamic")
-   self.physics.body:setFixedRotation(true)
+   self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, PlayerData.physics.bodyType or 'dynamic')
+   if PlayerData.physics.fixedRotation then self.physics.body:setFixedRotation(true) end
    -- World gravity is enabled for balls; keep player independent by disabling world gravity influence
    if self.physics.body.setGravityScale then
-      self.physics.body:setGravityScale(0)
+      self.physics.body:setGravityScale(PlayerData.physics.gravityScale or 0)
    end
    -- Rectangle shape (full width/height)
    self.physics.shape = love.physics.newRectangleShape(self.width / meter, self.height / meter)
    self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
-   self.physics.fixture:setDensity(1)
-   self.physics.fixture:setFriction(0.8)
-   self.physics.fixture:setRestitution(0)
-   self.physics.fixture:setSensor(false)
+   self.physics.fixture:setDensity(PlayerData.physics.density or 1)
+   self.physics.fixture:setFriction(PlayerData.physics.friction or 0.8)
+   self.physics.fixture:setRestitution(PlayerData.physics.restitution or 0)
+   self.physics.fixture:setSensor(PlayerData.physics.sensor == true)
    self.physics.fixture:setUserData({ tag = "player" })
    self.physics.body:resetMassData()
 
    -- Foot sensor: a small sensor fixture at the feet that overlaps slightly into ground
    do
       local meter = love.physics.getMeter()
-      local footWidth = self.width * 0.8
-      local footHeight = 3
+   local footWidth = self.width * (PlayerData.physics.foot.widthFactor or 0.8)
+   local footHeight = PlayerData.physics.foot.height or 3
       -- Offset so it sits at the very bottom, extending ~1px into ground
-      local oy = (self.height/2) - (footHeight/2) + 1
+   local oy = (self.height/2) - (footHeight/2) + (PlayerData.physics.foot.inset or 1)
       self.physics.footShape = love.physics.newRectangleShape(0, oy / meter, footWidth / meter, footHeight / meter)
       self.physics.footFixture = love.physics.newFixture(self.physics.body, self.physics.footShape)
       self.physics.footFixture:setSensor(true)
@@ -72,10 +73,11 @@ end
 function Player:loadAssets()
    spritesheet = love.graphics.newImage('asets/sprites/spritesheet_player_walk.png')
    local grid = anim8.newGrid(16, 16, spritesheet:getWidth(), spritesheet:getHeight())
-   animation_idle = anim8.newAnimation(grid('1-2',1), 0.5)
-   animation_walk = anim8.newAnimation(grid('3-8',1), 0.09)
-   animation_jump = anim8.newAnimation(grid('9-10',1), 0.1)
-   animation_fall = anim8.newAnimation(grid('11-12',1), 0.1)
+   local A = PlayerData.animations or {}
+   animation_idle = anim8.newAnimation(grid('1-2',1),  A.idleFrameTime or 0.5)
+   animation_walk = anim8.newAnimation(grid('3-8',1),  A.walkFrameTime or 0.09)
+   animation_jump = anim8.newAnimation(grid('9-10',1), A.jumpFrameTime or 0.1)
+   animation_fall = anim8.newAnimation(grid('11-12',1),A.fallFrameTime or 0.1)
 
 end
 
