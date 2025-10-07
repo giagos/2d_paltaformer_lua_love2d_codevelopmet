@@ -9,8 +9,8 @@ return {
   height = 23,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 20,
-  nextobjectid = 44,
+  nextlayerid = 22,
+  nextobjectid = 48,
   properties = {},
   tilesets = {
     {
@@ -263,32 +263,6 @@ return {
           }
         },
         {
-          id = 7,
-          name = "",
-          type = "",
-          shape = "rectangle",
-          x = 64.125,
-          y = 271.875,
-          width = 143.875,
-          height = 15.875,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 8,
-          name = "",
-          type = "",
-          shape = "rectangle",
-          x = 352,
-          y = 271.875,
-          width = 112.125,
-          height = 15.875,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
           id = 9,
           name = "",
           type = "",
@@ -375,6 +349,32 @@ return {
           y = 224,
           width = 48.0909,
           height = 15.8182,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 46,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 64,
+          y = 272,
+          width = 144,
+          height = 16,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 47,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 352,
+          y = 272,
+          width = 112,
+          height = 16,
           rotation = 0,
           visible = true,
           properties = {}
@@ -704,6 +704,22 @@ return {
         46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
         46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46
       }
+    },
+    {
+      type = "imagelayer",
+      image = "",
+      id = 21,
+      name = "Image Layer 1",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      repeatx = false,
+      repeaty = false,
+      properties = {}
     }
   }
 }

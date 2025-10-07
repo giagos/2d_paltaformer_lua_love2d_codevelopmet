@@ -6,10 +6,11 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
+        "map/tmx/rules",
         "map",
-        "map/tmx",
+        "map/tsx",
         ".",
-        "map/tsx"
+        "map/tmx"
     ],
     "fileStates": {
         "": {
@@ -67,7 +68,7 @@
         },
         "map/tmx/rules/AutoTileRules.tmx": {
             "scale": 2,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 240,
                 "y": 225.5
@@ -75,16 +76,16 @@
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
+                2,
                 4,
-                5,
                 3,
-                2
+                5
             ],
             "scale": 1.5,
-            "selectedLayer": 7,
+            "selectedLayer": 9,
             "viewCenter": {
-                "x": 200,
-                "y": 205.33333333333337
+                "x": 320,
+                "y": 168.66666666666663
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -92,6 +93,9 @@
         },
         "map/tmx/untitled.tmx#OutsideGrassTileset": {
             "scaleInDock": 2
+        },
+        "map/tmx/untitled.tmx#bell_pillar": {
+            "scaleInDock": 1
         },
         "map/tmx/untitled.tmx#placeholder": {
             "scaleInDock": 1
@@ -121,18 +125,19 @@
     "last.imagePath": "C:/Users/Aggelos/Documents/GitHub/2d_paltaformer_lua_love2d_codevelopmet/asets/sprites",
     "openFiles": [
         "map/tmx/untitled.tmx",
-        "map/tsx/placeholder.tsx"
+        "map/tsx/placeholder.tsx",
+        "map/tmx/rules/AutoTileRules.tmx"
     ],
     "project": "tiled_project.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "map/tmx/rules/AutoTileRules.tmx",
+        "map/tsx/placeholder.tsx",
+        "map/tmx/untitled.tmx",
         "map/tsx/untitled.tmx",
         "map/tmx/map3.tmx",
         "map/tmx/map2.tmx",
-        "map/tmx/map4.tmx",
-        "map/tmx/rules/AutoTileRules.tmx",
-        "map/tsx/placeholder.tsx",
-        "map/tmx/untitled.tmx"
+        "map/tmx/map4.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
