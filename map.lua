@@ -32,6 +32,7 @@ local state = {
   balls = {},          -- spawned balls
   boxes = {},          -- spawned boxes
   bells = {},
+  statues = {},
   chain = nil,
   chain2 = nil,
   mapWidth = 0,
@@ -169,6 +170,7 @@ function Map:spawnEntities()
   state.balls = {}
   state.boxes = {}
   state.bells = {}
+  state.statues = {}
 
   -- Use registry-driven spawner
   local results = Spawner.spawn(state.world, layer.objects, {
@@ -180,6 +182,7 @@ function Map:spawnEntities()
   state.boxes = results.boxes or {}
   state.balls = results.balls or {}
   state.bells = results.bells or {}
+  state.statues = results.statues or {}
 end
 
 -- Initialize map/layers and spawn entities (pattern similar to your example)
@@ -331,6 +334,7 @@ function Map:update(dt)
   for _, b in ipairs(state.balls) do if b.update then b:update(dt) end end
   for _, b in ipairs(state.boxes) do if b.update then b:update(dt) end end
   for _, b in ipairs(state.bells) do if b.update then b:update(dt) end end
+  for _, s in ipairs(state.statues) do if s.update then s:update(dt) end end
   if state.chain and state.chain.update then state.chain:update(dt) end
   if state.chain2 and state.chain2.update then state.chain2:update(dt) end
   if state.playerTextBox and state.playerTextBox.update then state.playerTextBox:update(dt) end
@@ -429,6 +433,7 @@ function Map:draw()
   for _, b in ipairs(state.balls) do if b.draw then b:draw() end end
   for _, b in ipairs(state.boxes) do if b.draw then b:draw() end end
   for _, b in ipairs(state.bells) do if b.draw then b:draw() end end
+  for _, s in ipairs(state.statues) do if s.draw then s:draw() end end
   if state.player and state.player.draw then state.player:draw() end
 
   if state.playerTextBox and state.playerTextBox.draw then state.playerTextBox:draw() end

@@ -60,7 +60,8 @@ end
 function Spawner.spawn(world, objects, ctx)
   ctx = ctx or {}
   local reg = ctx.registry or require('data.spawn_registry')
-  local results = { boxes = {}, balls = {}, bells = {}, others = {} }
+  local results = { boxes = {}, balls = {}, bells = {}, statues = {}, others = {} }
+  local hasStatue = false
 
   for _, obj in ipairs(objects or {}) do
     local objProps = obj.properties or {}
@@ -87,6 +88,11 @@ function Spawner.spawn(world, objects, ctx)
           if t == 'box' then table.insert(results.boxes, instance)
           elseif t == 'ball' then table.insert(results.balls, instance)
           elseif t == 'bell' then table.insert(results.bells, instance)
+          elseif t == 'statue' then
+            if not hasStatue then
+              table.insert(results.statues, instance)
+              hasStatue = true
+            end
           else table.insert(results.others, instance) end
         end
       end
