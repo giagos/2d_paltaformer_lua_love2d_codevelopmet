@@ -60,7 +60,11 @@ end
 function Spawner.spawn(world, objects, ctx)
   ctx = ctx or {}
   local reg = ctx.registry or require('data.spawn_registry')
-  local results = { boxes = {}, balls = {}, bells = {}, statues = {}, others = {} }
+  local results = {
+    boxes = {}, balls = {}, bells = {}, statues = {}, others = {},
+    all = {},
+    byType = { box = {}, ball = {}, bell = {}, statue = {}, other = {} },
+  }
   local hasStatue = false
 
   for _, obj in ipairs(objects or {}) do
@@ -85,6 +89,12 @@ function Spawner.spawn(world, objects, ctx)
         local cx, cy = toCenter(obj)
         local instance = factory.create(world, cx, cy, obj, cfg, ctx)
         if instance then
+          -- Tag instance with a kind/type for generic loops
+          if instance.kind == nil then instance.kind = t end
+          if instance.type == nil then instance.type = t end
+          table.insert(results.all, instance)
+          results.byType[t] = results.byType[t] or {}
+          table.insert(results.byType[t], instance)
           if t == 'box' then table.insert(results.boxes, instance)
           elseif t == 'ball' then table.insert(results.balls, instance)
           elseif t == 'bell' then table.insert(results.bells, instance)
