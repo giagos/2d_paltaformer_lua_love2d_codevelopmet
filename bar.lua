@@ -21,20 +21,29 @@ Bar.__index = Bar
 local ActiveBars = {}
 
 -- Create and register a new instance
-function Bar.new(world, x, y)
+-- Supports both Bar.new(world, x, y) and Bar.new(world, { x=.., y=.., w=.., h=.. })
+function Bar.new(world, a, b, c)
   local self = setmetatable({}, Bar)
-  self:load(world, x, y)
+  if type(a) == 'table' then
+    self:load(world, a.x, a.y, a)
+  else
+    self:load(world, a, b, c)
+  end
   table.insert(ActiveBars, self)
   return self
 end
 
 -- Minimal init: stores position and creates a basic static rectangle fixture
-function Bar:load(world, x, y)
+function Bar:load(world, x, y, opts)
+  opts = opts or {}
   -- Pixel-space fields used by draw/debug
-  self.x = x or 100
-  self.y = y or 100
-  self.w = 16   -- default visual width (px)
-  self.h = 16   -- default visual height (px)
+  self.x = x or opts.x or 100
+  self.y = y or opts.y or 100
+  self.w = opts.w or 16   -- default visual width (px)
+  self.h = opts.h or 16   -- default visual height (px)
+  self.kind = opts.kind or 'bar'
+  self.name = opts.name
+  self.properties = opts.properties or {}
 
   -- Create Box2D body + fixture (no extra properties set here)
   local meter = love.physics.getMeter()
@@ -42,6 +51,7 @@ function Bar:load(world, x, y)
   self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, 'static')
   self.physics.shape = love.physics.newRectangleShape(self.w / meter, self.h / meter)
   self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
+  self.physics.fixture:setUserData({ kind = self.kind, name = self.name, properties = self.properties })
 end
 
 -- Per-frame update: keep pixel coords in sync with body

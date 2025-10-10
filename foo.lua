@@ -10,7 +10,7 @@
 ---
 --- Key ideas
 --- - Rendering: image-centered draw if `opts.image` is provided; otherwise a primitive (rect/circle).
---- - Physics: fixture userData includes `{ tag = opts.tag or 'foo' }` to make debug/contact logic simple.
+--- - Physics: fixture userData includes `{ kind = 'foo', name = opts.name }` for debug/contact logic and spawner integration.
 --- - Lifecycle: `Foo.updateAll`, `Foo.drawAll`, `Foo.removeAll`, plus `instance:remove()`.
 --- - Contacts: module-level dispatchers call per-instance `beginContact`/`endContact` if present.
 ---
@@ -60,9 +60,20 @@ local function shcopy(t)
   return r
 end
 
---- Constructor (factory) - pass a table with options (see "Options" above).
-function Foo.new(world, opts)
+-- Constructor (factory)
+-- Supports two call styles for convenience:
+--   Foo.new(world, { x=..., y=..., ... })
+--   Foo.new(world, x, y, { ...opts })
+function Foo.new(world, a, b, c)
   local self = setmetatable({}, Foo)
+  local opts
+  if type(a) == 'table' then
+    opts = a
+  else
+    opts = c or {}
+    opts.x = a or opts.x
+    opts.y = b or opts.y
+  end
   self:load(world, opts)
   table.insert(ActiveFoos, self)
   return self
@@ -76,8 +87,10 @@ function Foo:load(world, opts)
   self.shape = opts.shape or 'rect'
   self.w = opts.w or 16
   self.h = opts.h or 16
-  self.r = opts.r or 8
-  self.tag = opts.tag or 'foo'
+  self.radius = opts.r or 8
+  self.kind = opts.kind or 'foo'
+  self.name = opts.name
+  self.properties = opts.properties or {}
   self.color = opts.color or {0.8, 0.85, 0.9, 1}
 
   -- Optional image; if provided and shape is 'rect', width/height default to image size
@@ -88,7 +101,7 @@ function Foo:load(world, opts)
       self.w = opts.w or self.img:getWidth()
       self.h = opts.h or self.img:getHeight()
     elseif self.shape == 'circle' then
-      -- if circle with image, keep r from opts or default; image is decorative
+      -- if circle with image, keep radius from opts or default; image is decorative
     end
   end
 
@@ -99,7 +112,7 @@ function Foo:load(world, opts)
   self.physics.body = love.physics.newBody(world, self.x / meter, self.y / meter, bodyType)
 
   if self.shape == 'circle' then
-    self.physics.shape = love.physics.newCircleShape((opts.r or self.r) / meter)
+    self.physics.shape = love.physics.newCircleShape((opts.r or self.radius) / meter)
   else -- 'rect'
     self.physics.shape = love.physics.newRectangleShape((opts.w or self.w) / meter, (opts.h or self.h) / meter)
   end
@@ -109,7 +122,7 @@ function Foo:load(world, opts)
   self.physics.fixture:setFriction(opts.friction or 0.6)
   self.physics.fixture:setRestitution(opts.restitution or 0)
   self.physics.fixture:setSensor(opts.sensor == true)
-  self.physics.fixture:setUserData({ tag = self.tag })
+  self.physics.fixture:setUserData({ kind = self.kind, name = self.name, properties = self.properties })
   if bodyType ~= 'static' then
     self.physics.body:resetMassData()
   end
@@ -150,7 +163,7 @@ function Foo:update(dt)
   local meter = love.physics.getMeter()
   local bx, by = self.physics.body:getPosition()
   self.x, self.y = bx * meter, by * meter
-  self.r = self.physics.body:getAngle()
+  self.angle = self.physics.body:getAngle()
   -- Optional custom behavior per class copy can be added below
   -- e.g., self:spin(dt) or self:animate(dt)
 end
@@ -158,17 +171,17 @@ end
 --- Draw this instance (image if available, else primitive). Image is drawn centered.
 function Foo:draw()
   if self.img then
-    love.graphics.draw(self.img, self.x, self.y, self.r or 0, 1, 1,
+    love.graphics.draw(self.img, self.x, self.y, self.angle or 0, 1, 1,
       (self.img:getWidth() / 2), (self.img:getHeight() / 2))
   else
     love.graphics.push()
     love.graphics.translate(self.x, self.y)
-    love.graphics.rotate(self.r or 0)
+    love.graphics.rotate(self.angle or 0)
     love.graphics.setColor(self.color)
     if self.shape == 'circle' then
-      love.graphics.circle('fill', 0, 0, self.r)
+      love.graphics.circle('fill', 0, 0, self.radius)
       love.graphics.setColor(0,0,0,0.9)
-      love.graphics.circle('line', 0, 0, self.r)
+      love.graphics.circle('line', 0, 0, self.radius)
     else
       love.graphics.rectangle('fill', -self.w/2, -self.h/2, self.w, self.h)
       love.graphics.setColor(0,0,0,0.9)

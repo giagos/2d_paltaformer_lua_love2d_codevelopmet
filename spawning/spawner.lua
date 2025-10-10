@@ -53,6 +53,11 @@ local function resolveTypeAndVariant(obj, reg)
       return t, variant, rule
     end
   end
+  -- Fallback: if no rule matched, but object.type corresponds to a registered type,
+  -- allow spawning purely by type with no variant requirement.
+  if otype and reg.types and reg.types[otype] then
+    return otype, nil, nil
+  end
   return nil, nil
 end
 
@@ -82,7 +87,16 @@ function Spawner.spawn(world, objects, ctx)
             goto continue
           end
         end
-        local preset = (variant and presetsForType[variant]) or {}
+        -- Support explicit variant via object.properties.variant when not using name-derived variant
+        local explicitVariant = nil
+        if not (rule and rule.variant and rule.variant.fromName) then
+          if type(objProps.variant) == 'string' then
+            local vkey = objProps.variant:lower()
+            if presetsForType[vkey] then explicitVariant = vkey end
+          end
+        end
+        local chosenVariant = variant or explicitVariant
+        local preset = (chosenVariant and presetsForType[chosenVariant]) or {}
         -- Merge order: type defaults <- variant preset <- object properties
         local cfg = deepMerge(typeEntry.defaults or {}, preset or {})
         cfg = deepMerge(cfg, objProps or {})
@@ -92,6 +106,7 @@ function Spawner.spawn(world, objects, ctx)
           -- Tag instance with a kind/type for generic loops
           if instance.kind == nil then instance.kind = t end
           if instance.type == nil then instance.type = t end
+          if instance.name == nil then instance.name = obj.name end
           table.insert(results.all, instance)
           results.byType[t] = results.byType[t] or {}
           table.insert(results.byType[t], instance)
