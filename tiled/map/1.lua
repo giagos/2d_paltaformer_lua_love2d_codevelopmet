@@ -643,7 +643,9 @@ return {
           height = 24,
           rotation = 0,
           visible = true,
-          properties = {}
+          properties = {
+            ["key"] = "e"
+          }
         }
       }
     },
