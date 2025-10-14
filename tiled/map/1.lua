@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 21,
-  nextobjectid = 55,
+  nextobjectid = 57,
   properties = {},
   tilesets = {
     {
@@ -555,6 +555,21 @@ return {
           properties = {
             ["sensor"] = "interactableSensor1"
           }
+        },
+        {
+          id = 56,
+          name = "button2",
+          type = "",
+          shape = "rectangle",
+          x = 576,
+          y = 272,
+          width = 16,
+          height = 16,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["sensor"] = "interactableSensor2"
+          }
         }
       }
     },
@@ -645,6 +660,21 @@ return {
           visible = true,
           properties = {
             ["key"] = "e"
+          }
+        },
+        {
+          id = 55,
+          name = "interactableSensor2",
+          type = "",
+          shape = "rectangle",
+          x = 568.909,
+          y = 262.909,
+          width = 31.5,
+          height = 24,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["key"] = "f"
           }
         }
       }

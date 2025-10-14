@@ -30,6 +30,12 @@
 local Sensors = require('sensor_handler')
 
 local Interact = {}
+-- Ensure callback tables exist even before init so other modules can register
+Interact._onEnter = Interact._onEnter or {}
+Interact._onExit  = Interact._onExit  or {}
+-- Expose public tables for registering callbacks early
+Interact.onEnter = Interact._onEnter
+Interact.onExit  = Interact._onExit
 
 -- Read-only interface with sensor-like tables
 local mt = {
@@ -78,8 +84,12 @@ function Interact.init(world, map, getPlayerFixtureFn, player)
   Interact._entries = {}           -- [name] = { count = number, active = { [fixture]=true } }
   Interact._fixtureNames = {}      -- [fixture] = { [name]=true }
   Interact._keyByName = {}         -- [name] = 'e'|'f'|nil
+  -- _onEnter/_onExit already exist from module load; keep references for safety
   Interact._onEnter = Interact._onEnter or {}
   Interact._onExit  = Interact._onExit  or {}
+  -- Ensure public alias tables remain stable (in case someone keeps the reference)
+  Interact.onEnter = Interact._onEnter
+  Interact.onExit  = Interact._onExit
   setmetatable(Interact, mt)
 
   -- Discover fixtures from STI map: only those inside 'sensor'/'sensors' layers with our name pattern

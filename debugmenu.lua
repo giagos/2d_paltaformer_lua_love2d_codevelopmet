@@ -32,7 +32,7 @@ function DebugMenu.keypressed(key)
     elseif key == "f3" then
         state.showSensorsOverlay = not state.showSensorsOverlay
         print(string.format('[F3] Sensors overlay %s', state.showSensorsOverlay and 'ON' or 'OFF'))
-    elseif key == "f4" or key == "f" then
+    elseif key == "f4" then
         state.showInfo = not state.showInfo
         print(string.format('[%s] Debug info %s', key:upper(), state.showInfo and 'ON' or 'OFF'))
     elseif key == "f5" then

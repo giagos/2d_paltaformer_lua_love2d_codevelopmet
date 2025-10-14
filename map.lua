@@ -488,6 +488,16 @@ function Map:keypressed(key)
   end
 end
 
+function Map:keyreleased(key)
+  -- Forward key release to entities that care (e.g., momentary buttons)
+  for _, e in ipairs(state.entities or {}) do
+    if e.keyreleased then
+      local consumed = e:keyreleased(key)
+      if consumed then break end
+    end
+  end
+end
+
 function Map:mousepressed(x, y, button)
   local sx, sy = x / state.scale, y / state.scale
   local captured = false

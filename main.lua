@@ -77,6 +77,10 @@ function love.keypressed(key, scancode, isrepeat)
 	Map:keypressed(key)
 end
 
+function love.keyreleased(key, scancode)
+  if Map.keyreleased then Map:keyreleased(key) end
+end
+
 -- Forward mouse input to chain for dragging the red anchor
 function love.mousepressed(x, y, button)
 	Map:mousepressed(x, y, button)

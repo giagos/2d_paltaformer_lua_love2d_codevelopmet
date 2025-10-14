@@ -29,7 +29,8 @@ return {
       statue = {}, -- singleton/image-based; no size tuning needed now
     },
     button = {
-      button1 = { w = 16, h = 16 },
+      button1 = { w = 16, h = 16, toggle = true },
+      button2 = { w = 16, h = 16, toggle = false },
     },
   },
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="21" nextobjectid="55">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="21" nextobjectid="57">
  <editorsettings>
   <export target="../1.lua" format="lua"/>
  </editorsettings>
@@ -142,6 +142,11 @@
     <property name="sensor" value="interactableSensor1"/>
    </properties>
   </object>
+  <object id="56" name="button2" x="576" y="272" width="16" height="16">
+   <properties>
+    <property name="sensor" value="interactableSensor2"/>
+   </properties>
+  </object>
  </objectgroup>
  <imagelayer id="20" name="Image Layer 1"/>
  <objectgroup color="#0055ff" id="3" name="sensor">
@@ -160,6 +165,11 @@
   <object id="53" name="interactableSensor1" x="407.5" y="247" width="31.5" height="24">
    <properties>
     <property name="key" value="e"/>
+   </properties>
+  </object>
+  <object id="55" name="interactableSensor2" x="568.909" y="262.909" width="31.5" height="24">
+   <properties>
+    <property name="key" value="f"/>
    </properties>
   </object>
  </objectgroup>
