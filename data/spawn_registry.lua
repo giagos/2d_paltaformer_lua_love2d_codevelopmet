@@ -9,6 +9,7 @@ return {
     ball = { factory = 'spawning.factories.ball', defaults = { restitution = 0.6, friction = 0.4 } },
     bell = { factory = 'spawning.factories.bell', defaults = {} },
     statue = { factory = 'spawning.factories.statue', defaults = {} },
+     button = { factory = 'spawning.factories.button', defaults = { w = 16, h = 16 } },
   },
 
   -- Variants per type (sizes/options). Names should match object.name variants when using fromName.
@@ -26,7 +27,10 @@ return {
     },
     statue = {
       statue = {}, -- singleton/image-based; no size tuning needed now
-    }
+    },
+    button = {
+      button1 = { w = 16, h = 16 },
+    },
   },
 
   -- Matching rules: name-based only. Variant is derived from the full object name, and must exist.
@@ -35,6 +39,7 @@ return {
     { when = { namePrefix = 'box'  }, type = 'box',  variant = { fromName = true } },
     { when = { namePrefix = 'ball' }, type = 'ball', variant = { fromName = true } },
     { when = { namePrefix = 'bell' }, type = 'bell', variant = { fromName = true } },
+     { when = { namePrefix = 'button' }, type = 'button', variant = { fromName = true } },
     { when = { namePrefix = 'statue' }, type = 'statue', variant = { fromName = true } },
   }
 }

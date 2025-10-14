@@ -10,6 +10,7 @@ local Chain = require("chain")
 local Bell = require("bell")
 local PlayerTextBox = require("player_text_box")
 local Sensors = require("sensor_handler")
+local Interact = require("interactable_sensor_handler")
 local LevelTransitions = require("level_transitions_handler")
 local DebugMenu = require("debugmenu")
 local GameContext = require("game_context")
@@ -79,6 +80,9 @@ local function beginContact(a, b, collision)
     state.player:beginContact(a, b, collision)
   end
   Sensors.beginContact(a, b)
+  if Interact and Interact.beginContact then
+    Interact.beginContact(a, b)
+  end
   if state.transitions then
     ---@diagnostic disable-next-line: undefined-field
     if state.transitions.beginContact then
@@ -93,6 +97,9 @@ local function endContact(a, b, collision)
     state.player:endContact(a, b, collision)
   end
   Sensors.endContact(a, b)
+  if Interact and Interact.endContact then
+    Interact.endContact(a, b)
+  end
   if state.transitions then
     ---@diagnostic disable-next-line: undefined-field
     if state.transitions.endContact then
@@ -295,6 +302,13 @@ function Map:load(scale)
     return state.player and state.player.physics and state.player.physics.fixture or nil
   end)
 
+  -- Interactable sensors: initialize after STI colliders are ready
+  if Interact and Interact.init then
+    Interact.init(state.world, state.level, function()
+      return state.player and state.player.physics and state.player.physics.fixture or nil
+    end)
+  end
+
   -- Example sensor callbacks
   Sensors.onEnter.sensor1 = function()
     if state.playerTextBox and state.playerTextBox.show then state.playerTextBox:show("Sensor1 hit!", 2) end
@@ -393,6 +407,12 @@ function Map:_switchLevelAndTeleport(destMapPath, tx, ty)
   Sensors.init(state.world, state.level, function()
     return state.player and state.player.physics and state.player.physics.fixture or nil
   end)
+  -- Rebuild interactable sensors for the new map as well
+  if Interact and Interact.init then
+    Interact.init(state.world, state.level, function()
+      return state.player and state.player.physics and state.player.physics.fixture or nil
+    end)
+  end
 end
 
 -- Clean current level: remove STI solid layer bodies and clear all spawned objects
@@ -458,6 +478,13 @@ function Map:keypressed(key)
   end
   if state.player and state.player.keypressed then
     state.player:keypressed(key)
+  end
+  -- Forward key input to entities that consume it (e.g., buttons)
+  for _, e in ipairs(state.entities or {}) do
+    if e.keypressed then
+      local consumed = e:keypressed(key)
+      if consumed then break end
+    end
   end
 end
 

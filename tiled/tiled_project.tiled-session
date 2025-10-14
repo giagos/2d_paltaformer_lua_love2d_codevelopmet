@@ -69,22 +69,22 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 240,
-                "y": 225.5
+                "x": 364.75,
+                "y": 400.25
             }
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
-                2,
-                5,
                 3,
-                4
+                4,
+                2,
+                5
             ],
             "scale": 2,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 315.75,
-                "y": 161.75
+                "x": 320,
+                "y": 183.75
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
