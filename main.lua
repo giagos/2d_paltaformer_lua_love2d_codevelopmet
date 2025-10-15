@@ -78,19 +78,23 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key, scancode)
-  if Map.keyreleased then Map:keyreleased(key) end
+	if DebugMenu.keyreleased then DebugMenu.keyreleased(key) end
+	if Map.keyreleased then Map:keyreleased(key) end
 end
 
 -- Forward mouse input to chain for dragging the red anchor
 function love.mousepressed(x, y, button)
+    if DebugMenu.mousepressed then DebugMenu.mousepressed(x, y, button) end
 	Map:mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
+	if DebugMenu.mousereleased then DebugMenu.mousereleased(x, y, button) end
 	Map:mousereleased(x, y, button)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
+	if DebugMenu.mousemoved then DebugMenu.mousemoved(x, y, dx, dy) end
 	Map:mousemoved(x, y, dx, dy)
 end
 

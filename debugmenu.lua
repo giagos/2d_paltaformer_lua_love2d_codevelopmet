@@ -7,6 +7,7 @@
 local DebugDraw = require("debugdraw")
 local GameContext = require("game_context")
 local Bell = require("bell")
+local Camera = require("camera")
 
 
 local DebugMenu = {}
@@ -17,6 +18,9 @@ local state = {
     showInfo = false,
     showFPS = false,
     showTransitions = false,
+    showCameraPanel = false,
+    -- slider interaction state
+    dragging = nil, -- 'scale' | 'yoffset' | nil
 }
 
 function DebugMenu.init(world, map, player)
@@ -26,7 +30,10 @@ function DebugMenu.init(world, map, player)
 end
 
 function DebugMenu.keypressed(key)
-    if key == "f2" then
+    if key == "f1" then
+        state.showCameraPanel = not state.showCameraPanel
+        print(string.format('[F1] Camera panel %s', state.showCameraPanel and 'ON' or 'OFF'))
+    elseif key == "f2" then
         state.showColliders = not state.showColliders
         print(string.format('[F2] Colliders %s', state.showColliders and 'ON' or 'OFF'))
     elseif key == "f3" then
@@ -42,6 +49,81 @@ function DebugMenu.keypressed(key)
         -- F6 dedicated to FPS
         state.showFPS = not state.showFPS
         print(string.format('[F6] FPS counter %s', state.showFPS and 'ON' or 'OFF'))
+    end
+end
+
+-- Optional: allow +/- to adjust camera box scale when panel is open
+function DebugMenu.keyreleased(key)
+    if not state.showCameraPanel then return end
+    local step = 0.05
+    if key == "+" or key == "kp+" or key == "=" then
+        local cur = (Camera.getBoxScale and Camera.getBoxScale()) or 1.0
+        local _, maxS = (Camera.getBoxScaleLimits and Camera.getBoxScaleLimits()) or 0.3, 3.0
+        if Camera.setBoxScale then Camera.setBoxScale(math.min(maxS or 3.0, cur + step)) end
+    elseif key == "-" or key == "kp-" then
+        local cur = (Camera.getBoxScale and Camera.getBoxScale()) or 1.0
+        local minS = (Camera.getBoxScaleLimits and (Camera.getBoxScaleLimits())) or 0.3
+        if type(minS) == 'number' then
+            if Camera.setBoxScale then Camera.setBoxScale(math.max(minS, cur - step)) end
+        else
+            -- Fallback if limits not available
+            if Camera.setBoxScale then Camera.setBoxScale(cur - step) end
+        end
+    end
+end
+
+-- Mouse interaction for sliders
+function DebugMenu.mousepressed(x, y, button)
+    if not state.showCameraPanel then return end
+    if button ~= 1 then return end
+    -- Layout params must match drawScreen panel
+    local pad, lh = 6, 16
+    local barW, barH = 240, 10
+    local panelY = love.graphics.getHeight() - 64
+    local x0 = 8 + pad
+    local y0 = panelY + pad + 6
+    local x1 = x0
+    local y1 = y0 + 26 -- second slider offset below
+
+    -- Hit test scale slider
+    if x >= x0 and x <= x0 + barW and y >= y0 and y <= y0 + barH then
+        state.dragging = 'scale'
+        DebugMenu.mousemoved(x, y, 0, 0)
+        return
+    end
+    -- Hit test y-offset slider
+    if x >= x1 and x <= x1 + barW and y >= y1 and y <= y1 + barH then
+        state.dragging = 'yoffset'
+        DebugMenu.mousemoved(x, y, 0, 0)
+        return
+    end
+end
+
+function DebugMenu.mousereleased(x, y, button)
+    if button ~= 1 then return end
+    state.dragging = nil
+end
+
+function DebugMenu.mousemoved(x, y, dx, dy)
+    if not state.showCameraPanel then return end
+    if not state.dragging then return end
+    local pad = 6
+    local barW = 240
+    local panelY = love.graphics.getHeight() - 64
+    local sX = 8 + pad
+    local sY = panelY + pad + 6
+    local t = (x - sX) / barW
+    t = math.max(0, math.min(1, t))
+    if state.dragging == 'scale' then
+        local minS, maxS = 0.3, 3.0
+        if Camera.getBoxScaleLimits then minS, maxS = Camera.getBoxScaleLimits() end
+        local val = minS + t * (maxS - minS)
+        if Camera.setBoxScale then Camera.setBoxScale(val) end
+    elseif state.dragging == 'yoffset' then
+        local minV, maxV = -200, 200
+        if Camera.getYOffsetLimits then minV, maxV = Camera.getYOffsetLimits() end
+        local val = minV + t * (maxV - minV)
+        if Camera.setYOffset then Camera.setYOffset(val) end
     end
 end
 
@@ -173,6 +255,51 @@ function DebugMenu.drawScreen()
         love.graphics.pop()
         -- Continue to show player panel below if enabled
         y = y + h + 8
+    end
+
+    -- Camera panel (F1): sliders to change Camera rectangle size and Y offset
+    if state.showCameraPanel then
+        local x, y, pad, lh = 8, love.graphics.getHeight() - 64, 6, 16
+        local cur = Camera.getBoxScale and Camera.getBoxScale() or 1.0
+        local minS, maxS = 0.3, 3.0
+        if Camera.getBoxScaleLimits then
+            minS, maxS = Camera.getBoxScaleLimits()
+        end
+        -- Draw background bar
+        local barW, barH = 240, 10
+        love.graphics.push('all')
+        love.graphics.setColor(0,0,0,0.5)
+        love.graphics.rectangle('fill', x, y, barW + pad * 2, lh*3, 4, 4)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.print("Camera Box Size (F1)", x + pad, y + pad - 14)
+        -- Slider
+        local sX = x + pad
+        local sY = y + pad + 6
+        love.graphics.setColor(0.8,0.8,0.8,1)
+        love.graphics.rectangle('fill', sX, sY, barW, barH)
+        local t = (cur - minS) / (maxS - minS)
+        t = math.max(0, math.min(1, t))
+        love.graphics.setColor(0.2,0.7,1.0,1)
+        love.graphics.rectangle('fill', sX, sY, barW * t, barH)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.print(string.format("%.2f x", cur), sX + barW + 8, sY - 4)
+
+        -- Y Offset slider
+        local yCur = Camera.getYOffset and Camera.getYOffset() or 0
+        local yMin, yMax = -200, 200
+        if Camera.getYOffsetLimits then yMin, yMax = Camera.getYOffsetLimits() end
+        local sY2 = sY + 26
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.print("Camera Y Offset", x + pad, sY2 - 14)
+        love.graphics.setColor(0.8,0.8,0.8,1)
+        love.graphics.rectangle('fill', sX, sY2, barW, barH)
+        local t2 = (yCur - yMin) / (yMax - yMin)
+        t2 = math.max(0, math.min(1, t2))
+        love.graphics.setColor(0.2,0.7,1.0,1)
+        love.graphics.rectangle('fill', sX, sY2, barW * t2, barH)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.print(string.format("%d px", math.floor(yCur + 0.5)), sX + barW + 8, sY2 - 4)
+        love.graphics.pop()
     end
 
     if not state.showInfo or not DebugMenu.player then return end

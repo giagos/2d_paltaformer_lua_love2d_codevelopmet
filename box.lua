@@ -69,8 +69,11 @@ function Box.removeAll()
 end
 
 function Box:update(dt)
+  if not (self.physics and self.physics.body) then return end
+  local body = self.physics.body
+  if body.isDestroyed and body:isDestroyed() then return end
   local meter = love.physics.getMeter()
-  local bx, by = self.physics.body:getPosition()
+  local bx, by = body:getPosition()
   self.x, self.y = bx * meter, by * meter
 end
 
@@ -78,7 +81,10 @@ function Box:draw()
   love.graphics.push()
   love.graphics.translate(self.x, self.y)
   if self.physics and self.physics.body then
-    love.graphics.rotate(self.physics.body:getAngle())
+    local body = self.physics.body
+    if not (body.isDestroyed and body:isDestroyed()) then
+      love.graphics.rotate(body:getAngle())
+    end
   end
 
   love.graphics.setColor(self.color)

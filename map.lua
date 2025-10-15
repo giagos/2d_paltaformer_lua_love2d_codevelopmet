@@ -429,9 +429,21 @@ function Map:clean()
   if Ball and Ball.removeAll then Ball.removeAll() end
   if Box and Box.removeAll then Box.removeAll() end
   if Chain and Chain.removeAll then Chain.removeAll() end
+  -- Attempt to remove any other generic entities cleanly
+  if state.entities then
+    for _, e in ipairs(state.entities) do
+      if e and type(e.remove) == 'function' then
+        pcall(function() e:remove() end)
+      end
+    end
+  end
   -- Clear tables we maintain
   state.balls = {}
   state.boxes = {}
+  state.bells = {}
+  state.statues = {}
+  state.entities = {}
+  state.entitiesByType = {}
   state.chain = nil
   state.chain2 = nil
 end
