@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="21" nextobjectid="57">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="21" nextobjectid="59">
  <editorsettings>
   <export target="../1.lua" format="lua"/>
  </editorsettings>
@@ -147,6 +147,11 @@
     <property name="sensor" value="interactableSensor2"/>
    </properties>
   </object>
+  <object id="57" name="door1" x="224" y="256" width="16" height="32">
+   <properties>
+    <property name="sensor" value="interactableSensor3"/>
+   </properties>
+  </object>
  </objectgroup>
  <imagelayer id="20" name="Image Layer 1"/>
  <objectgroup color="#0055ff" id="3" name="sensor">
@@ -170,6 +175,11 @@
   <object id="55" name="interactableSensor2" x="568.909" y="262.909" width="31.5" height="24">
    <properties>
     <property name="key" value="f"/>
+   </properties>
+  </object>
+  <object id="58" name="interactableSensor3" x="217.75" y="254.75" width="28.5" height="32.5">
+   <properties>
+    <property name="key" value="e"/>
    </properties>
   </object>
  </objectgroup>
