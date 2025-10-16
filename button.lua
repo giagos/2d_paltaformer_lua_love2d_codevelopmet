@@ -8,6 +8,8 @@
 -- The button will turn green when active, red otherwise.
 
 local Interact = require('interactable_sensor_handler')
+local SaveState = require('save_state')
+local GameContext = require('game_context')
 -- FUTURE animation groundwork:
 -- local anim8 = require('anim8')
 -- local spriteSheet, spriteGrid
@@ -56,7 +58,12 @@ function Button:load(world, x, y, w, h, opts)
   end
 
   -- State
-  self.isPressed = false -- toggled or momentary active state
+  local startOn = self.properties.startOn
+  if type(startOn) == 'string' then startOn = (startOn:lower() == 'true') end
+  if type(startOn) ~= 'boolean' then startOn = false end
+  self.isPressed = startOn -- toggled or momentary active state
+  -- Optional: name of a door to unlock when this becomes true (e.g., 'door2')
+  self.unlockDoor = self.properties.unlockDoor
   self._justConsumed = false
 
   -- When momentary and player exits the sensor, force off
@@ -93,10 +100,28 @@ function Button:keypressed(key)
   local required = self.requiredKey or Interact.getRequiredKey(self.sensorName)
   local allowAny = (required == nil)
   if Interact.isInside(self.sensorName) and (allowAny or lower == required) then
+    local was = self.isPressed
     if self.toggle then
       self.isPressed = not self.isPressed
     else
       self.isPressed = true -- momentary
+    end
+    -- If we just changed to true and have a target door to unlock, persist and update live props
+    if (not was) and self.isPressed and type(self.unlockDoor) == 'string' and self.unlockDoor ~= '' then
+      -- Persist in SaveState overlay
+      SaveState.setEntityPropCurrent(self.unlockDoor, 'locked', false)
+      -- Update live STI entity object props so doors that watch props can react immediately
+      if GameContext and GameContext.setEntityProp then
+        GameContext.setEntityProp(self.unlockDoor, 'locked', false)
+      end
+      print(string.format('[Button:%s] Unlocked %s', tostring(self.name), tostring(self.unlockDoor)))
+    elseif was and (not self.isPressed) and self.toggle and type(self.unlockDoor) == 'string' and self.unlockDoor ~= '' then
+      -- Toggle switched off: relock the door
+      SaveState.setEntityPropCurrent(self.unlockDoor, 'locked', true)
+      if GameContext and GameContext.setEntityProp then
+        GameContext.setEntityProp(self.unlockDoor, 'locked', true)
+      end
+      print(string.format('[Button:%s] Relocked %s', tostring(self.name), tostring(self.unlockDoor)))
     end
     return true
   end

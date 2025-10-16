@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="21">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="25">
  <editorsettings>
   <export target="../2.lua" format="lua"/>
  </editorsettings>
@@ -56,6 +56,16 @@
  </objectgroup>
  <objectgroup color="#00ff7f" id="3" name="entity">
   <object id="12" name="box2" x="160.5" y="191.5" width="31.25" height="31.5"/>
+  <object id="21" name="door2" x="528" y="272" width="16" height="32">
+   <properties>
+    <property name="sensor" value="interactableSensor3"/>
+   </properties>
+  </object>
+  <object id="23" name="button3" x="592" y="288" width="16" height="16">
+   <properties>
+    <property name="sensor" value="interactableSensor4"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup color="#00ffff" id="4" name="transitions">
   <object id="13" name="transition1" x="631.5" y="-2" width="16.25" height="305.5"/>
@@ -92,6 +102,16 @@
   <object id="14" name="sensor1" x="276" y="226.667" width="46.3333" height="27">
    <properties>
     <property name="sensor1" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="22" name="interactableSensor3" x="521.7" y="271.25" width="29.5996" height="32.25">
+   <properties>
+    <property name="key" value="e"/>
+   </properties>
+  </object>
+  <object id="24" name="interactableSensor4" x="583.5" y="282.5" width="32.75" height="21.25">
+   <properties>
+    <property name="key" value="e"/>
    </properties>
   </object>
  </objectgroup>

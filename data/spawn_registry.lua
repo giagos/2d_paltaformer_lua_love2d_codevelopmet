@@ -32,6 +32,8 @@ return {
     button = {
       button1 = { w = 16, h = 16, toggle = true },
       button2 = { w = 16, h = 16, toggle = false },
+      -- button3: like button1 but starts off (startOn=false) and unlocks door2 when pressed
+      button3 = { w = 16, h = 16, toggle = true, startOn = false, unlockDoor = 'door2' },
     },
     door = {
       door1 = { w = 16, h = 32, locked = false, isOpen = false },

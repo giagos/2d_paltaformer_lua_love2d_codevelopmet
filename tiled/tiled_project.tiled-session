@@ -19,11 +19,15 @@
             "scaleInDock": 1
         },
         "map/tmx/map2.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 4,
+            "expandedObjectLayers": [
+                3,
+                5
+            ],
+            "scale": 4,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 270.3333333333333,
-                "y": 290.33333333333337
+                "x": 583.875,
+                "y": 278.625
             }
         },
         "map/tmx/map2.tmx#OutsideGrassTileset": {
@@ -83,8 +87,8 @@
             "scale": 4,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 232.125,
-                "y": 271.125
+                "x": 531.375,
+                "y": 297.125
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -130,11 +134,11 @@
     "project": "tiled_project.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "map/tmx/map2.tmx",
         "map/tmx/untitled.tmx",
         "map/tsx/placeholder.tsx",
         "map/tsx/untitled.tmx",
         "map/tmx/map3.tmx",
-        "map/tmx/map2.tmx",
         "map/tmx/map4.tmx",
         "map/tmx/rules/AutoTileRules.tmx"
     ],

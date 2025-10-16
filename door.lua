@@ -23,6 +23,7 @@
 local Interact = require('interactable_sensor_handler')
 local PlayerData = require('data.player_data')
 local SaveState = require('save_state')
+local GameContext = require('game_context')
 
 local Door = {}
 Door.__index = Door
@@ -131,6 +132,23 @@ end
 
 function Door:update(dt)
   -- Placeholder: no per-frame logic besides possible animations later
+  -- Sync from live Tiled entity properties so external systems (e.g., buttons)
+  -- can update lock/open state instantly via GameContext/SaveState overlays.
+  if GameContext and GameContext.getEntityObjectProperties then
+    local props = GameContext.getEntityObjectProperties(self.name)
+    if props then
+      local pLocked = props.locked
+      if type(pLocked) == 'string' then pLocked = (pLocked:lower() == 'true') end
+      if type(pLocked) == 'boolean' and pLocked ~= self.isLocked then
+        self:setLocked(pLocked)
+      end
+      local pOpen = props.isOpen
+      if type(pOpen) == 'string' then pOpen = (pOpen:lower() == 'true') end
+      if type(pOpen) == 'boolean' and pOpen ~= self.isOpen then
+        self:setOpen(pOpen)
+      end
+    end
+  end
   -- FUTURE: update animations here
 end
 
