@@ -85,6 +85,9 @@ function Player:update(dt)
    -- Apply control + physics integration order:
    -- 1) movement/friction (horizontal), 2) gravity (vertical), 3) sync to body
    self:move(dt)
+   -- Defensive: if door fixtures flipped to sensors mid-contact, our counters can desync.
+   -- Recompute grounded based on live contacts so gravity isn't suppressed incorrectly.
+   if self._sanityCheckGrounded then self:_sanityCheckGrounded() end
    self:applyGravity(dt)
    self:syncPhysics()
    self:setDirection()
@@ -190,11 +193,11 @@ function Player:endContact(a, b, collision)
    -- Foot sensor unground when all contacts end
    if self.physics and self.physics.footFixture and (a == self.physics.footFixture or b == self.physics.footFixture) then
       local other = (a == self.physics.footFixture) and b or a
-      if other and not other:isSensor() then
-         self.groundContacts = math.max(0, self.groundContacts - 1)
-         if self.groundContacts == 0 then
-            self.grounded = false
-         end
+      -- Always decrement on foot endContact. The other fixture may have become a sensor mid-contact
+      -- (e.g., a door opening), which would otherwise skip this block and leave the player grounded.
+      self.groundContacts = math.max(0, self.groundContacts - 1)
+      if self.groundContacts == 0 then
+         self.grounded = false
       end
       return
    end
@@ -229,6 +232,36 @@ function Player:setDirection()
       ydirection = "down"
    else
       ydirection = "no"
+   end
+end
+
+-- Recompute grounded state from active Box2D contacts on the player's body.
+-- This guards against edge cases where fixtures change sensor state mid-contact (e.g., opening doors)
+-- and the expected endContact event doesn't properly clear our counters.
+function Player:_sanityCheckGrounded()
+   if not (self.physics and self.physics.body and self.physics.footFixture) then return end
+   local contacts = self.physics.body:getContactList()
+   local hasSupport = false
+   for i = 1, #contacts do
+      local c = contacts[i]
+      if c and c:isTouching() then
+         local fa, fb = c:getFixtures()
+         if fa == self.physics.footFixture or fb == self.physics.footFixture then
+            local other = (fa == self.physics.footFixture) and fb or fa
+            if other and (not other:isSensor()) then
+               hasSupport = true
+               break
+            end
+         end
+      end
+   end
+   if hasSupport then
+      -- Ensure grounded flag aligns; leave groundContacts as-is (it will self-correct via callbacks)
+      self.grounded = true
+   else
+      -- No solid contact under foot: clear grounded to allow gravity
+      self.grounded = false
+      self.groundContacts = 0
    end
 end
 
