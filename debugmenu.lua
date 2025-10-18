@@ -8,6 +8,8 @@ local DebugDraw = require("debugdraw")
 local GameContext = require("game_context")
 local Bell = require("bell")
 local Camera = require("camera")
+local Interact = require("interactable_sensor_handler")
+local PlayerData = require('data.player_data')
 
 
 local DebugMenu = {}
@@ -18,9 +20,12 @@ local state = {
     showInfo = false,
     showFPS = false,
     showTransitions = false,
+    showInteractables = false, -- F5: hover tooltips for interactables
     showCameraPanel = false,
     -- slider interaction state
     dragging = nil, -- 'scale' | 'yoffset' | nil
+    -- hover cache
+    lastHoverName = nil,
 }
 
 function DebugMenu.init(world, map, player)
@@ -43,8 +48,11 @@ function DebugMenu.keypressed(key)
         state.showInfo = not state.showInfo
         print(string.format('[%s] Debug info %s', key:upper(), state.showInfo and 'ON' or 'OFF'))
     elseif key == "f5" then
+        state.showInteractables = not state.showInteractables
+        print(string.format('[F5] Interactables hover %s', state.showInteractables and 'ON' or 'OFF'))
+    elseif key == "f7" then
         state.showTransitions = not state.showTransitions
-        print(string.format('[F5] Transitions panel %s', state.showTransitions and 'ON' or 'OFF'))
+        print(string.format('[F7] Transitions panel %s', state.showTransitions and 'ON' or 'OFF'))
     elseif key == "f6" then
         -- F6 dedicated to FPS
         state.showFPS = not state.showFPS
@@ -171,7 +179,154 @@ function DebugMenu.drawScreen()
         love.graphics.pop()
     end
 
-    -- Transitions inspector (F5)
+    -- Interactables hover inspector (F5): show small tooltip near cursor when hovering entities
+    if state.showInteractables and DebugMenu._mapOwner then
+        local MapOwner = DebugMenu._mapOwner
+        local mx, my = love.mouse.getPosition()
+        local scale = MapOwner.getScale and MapOwner:getScale() or 1
+        local wx, wy = mx / scale, my / scale
+        local hovered = nil
+        -- Probe entities and find one under cursor (prefer door/button kinds)
+        local entities = MapOwner and MapOwner.entities or nil
+        -- Fallback path: try to access via getter we control
+        if not entities and MapOwner._getEntities then
+            local ok, list = pcall(function() return MapOwner:_getEntities() end)
+            if ok then entities = list end
+        end
+        -- If MapOwner doesn't expose entities, try GameContext STI objects in entity layer
+        if not entities and GameContext and GameContext.getLayer then
+            local layer = GameContext.getLayer('entity')
+            if layer and layer.objects then entities = layer.objects end
+        end
+        if entities then
+            for _, e in ipairs(entities) do
+                local k = e.kind or e.type or ''
+                -- Resolve world-space center position (pixels)
+                local ex, ey = e.x, e.y
+                if not (ex and ey) then
+                    -- physics.body (preferred for real entities)
+                    local body = (e.physics and e.physics.body) or e.body
+                    if body and body.getPosition then
+                        local mx, my = body:getPosition()
+                        local meter = love.physics.getMeter()
+                        ex, ey = mx * meter, my * meter
+                    end
+                end
+                local ew = e.w or e.width or 16
+                local eh = e.h or e.height or 16
+                if ex and ey then
+                    local x0, y0 = ex - ew/2, ey - eh/2
+                    if wx >= x0 and wx <= x0 + ew and wy >= y0 and wy <= y0 + eh then
+                        -- Prioritize door/button; else take first hit
+                        if k == 'door' or k == 'button' then hovered = e; break end
+                        hovered = hovered or e
+                    end
+                end
+            end
+        end
+        if hovered then
+            local name = hovered.name or '(unnamed)'
+            local kind = hovered.kind or hovered.type or 'entity'
+            local props = GameContext and GameContext.getEntityObjectProperties and GameContext.getEntityObjectProperties(name) or {}
+            -- Build small info set depending on kind
+            local lines = { string.format('%s: %s', kind, name) }
+            if kind == 'door' then
+                local localOpen = hovered.getOpen and hovered:getOpen() or hovered.isOpen
+                local localLocked = hovered.getLocked and hovered:getLocked() or hovered.isLocked
+                table.insert(lines, string.format('isOpen: %s (gc: %s)', tostring(localOpen), tostring(props and props.isOpen)))
+                table.insert(lines, string.format('locked: %s (gc: %s)', tostring(localLocked), tostring(props and props.locked)))
+                -- Door input + collidable view
+                local dSensor = hovered.sensorName or (props and props.sensor)
+                if dSensor then
+                    local inside = Interact and Interact.isInside and Interact.isInside(dSensor)
+                    table.insert(lines, string.format('inside[%s]: %s', tostring(dSensor), tostring(inside)))
+                end
+                local dKey = hovered.key or (props and props.key)
+                if dKey then table.insert(lines, 'open key: ' .. tostring(dKey)) end
+                local uKey = hovered.unlockKey or (props and props.unlockKey)
+                if uKey then table.insert(lines, 'unlockKey: ' .. tostring(uKey)) end
+                local isFixSensor = (hovered.physics and hovered.physics.fixture and hovered.physics.fixture.isSensor and hovered.physics.fixture:isSensor()) or false
+                table.insert(lines, 'fixtureSensor(open): ' .. tostring(isFixSensor))
+                -- Player overlap with door rect
+                local pw = (PlayerData and PlayerData.size and PlayerData.size.width) or 8
+                local ph = (PlayerData and PlayerData.size and PlayerData.size.height) or 16
+                local px, py = nil, nil
+                local pbody = DebugMenu.player and DebugMenu.player.physics and DebugMenu.player.physics.body or nil
+                if pbody and pbody.getPosition then
+                    local mxp, myp = pbody:getPosition()
+                    local meter = love.physics.getMeter()
+                    px, py = mxp * meter, myp * meter
+                end
+                if px and py then
+                    local ex, ey = hovered.x, hovered.y
+                    if not (ex and ey) then
+                        local b = hovered.physics and hovered.physics.body
+                        if b and b.getPosition then
+                            local mxp2, myp2 = b:getPosition()
+                            local meter = love.physics.getMeter()
+                            ex, ey = mxp2 * meter, myp2 * meter
+                        end
+                    end
+                    if ex and ey then
+                        local x0, y0 = ex - (hovered.w or 16)/2, ey - (hovered.h or 32)/2
+                        local function overlap(ax, ay, aw, ah, bx, by, bw, bh)
+                            return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah
+                        end
+                        local o = overlap(x0, y0, hovered.w or 16, hovered.h or 32, px - pw/2, py - ph/2, pw, ph)
+                        table.insert(lines, 'overlapDoor: ' .. tostring(o))
+                    end
+                end
+            elseif kind == 'button' then
+                local localPressed = hovered.getState and hovered:getState() or hovered.isPressed
+                table.insert(lines, string.format('pressed: %s (gc.startOn: %s)', tostring(localPressed), tostring(props and props.startOn)))
+                -- Show inside/key where possible
+                local sensorName = hovered.sensorName or (props and props.sensor)
+                if sensorName and Interact and Interact.isInside then
+                    local inside = Interact.isInside(sensorName)
+                    table.insert(lines, string.format('inside[%s]: %s', tostring(sensorName), tostring(inside)))
+                end
+                local reqKey = hovered.requiredKey or (Interact and Interact.getRequiredKey and sensorName and Interact.getRequiredKey(sensorName)) or props.key
+                if reqKey then table.insert(lines, 'key: ' .. tostring(reqKey)) end
+                if props and props.unlockDoor then table.insert(lines, 'unlockDoor: ' .. tostring(props.unlockDoor)) end
+                -- Toggle/momentary and sensor id
+                if hovered.toggle ~= nil then table.insert(lines, 'toggle: ' .. tostring(hovered.toggle)) end
+                if sensorName then table.insert(lines, 'sensor: ' .. tostring(sensorName)) end
+            end
+            -- Draw near mouse cursor (screen space)
+            local pad, lh = 6, 16
+            local font = love.graphics.getFont()
+            local w = 0
+            for _, line in ipairs(lines) do
+                local tw = font and font:getWidth(line) or 0
+                if tw > w then w = tw end
+            end
+            local h = lh * #lines
+            local x = mx + 16
+            local y = my + 16
+            -- keep inside screen
+            local sw, sh = love.graphics.getWidth(), love.graphics.getHeight()
+            if x + w + pad * 2 > sw then x = sw - (w + pad * 2) - 8 end
+            if y + h + pad * 2 > sh then y = sh - (h + pad * 2) - 8 end
+            love.graphics.push('all')
+            love.graphics.setColor(0,0,0,0.6)
+            love.graphics.rectangle('fill', x, y, w + pad * 2, h + pad * 2, 4, 4)
+            love.graphics.setColor(1,1,1,1)
+            for i, line in ipairs(lines) do
+                love.graphics.print(line, x + pad, y + pad + (i - 1) * lh)
+            end
+            love.graphics.pop()
+            -- Console print on hover change (one-shot to avoid spam)
+            if state.lastHoverName ~= name then
+                state.lastHoverName = name
+                print(string.format('[F5 Hover] %s (%s)', name, kind))
+            end
+        else
+            -- Clear hover cache if nothing hovered
+            if state.lastHoverName ~= nil then state.lastHoverName = nil end
+        end
+    end
+
+    -- Transitions inspector (F7)
     if state.showTransitions and DebugMenu.map then
         local lines = {}
         local added = 0

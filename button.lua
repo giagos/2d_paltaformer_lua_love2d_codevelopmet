@@ -106,6 +106,13 @@ function Button:keypressed(key)
     else
       self.isPressed = true -- momentary
     end
+    -- Persist toggle button state so it survives level transitions (session or disk if enabled)
+    if self.toggle and type(self.name) == 'string' and self.name ~= '' then
+      SaveState.setEntityPropCurrent(self.name, 'startOn', self.isPressed)
+      if GameContext and GameContext.setEntityProp then
+        GameContext.setEntityProp(self.name, 'startOn', self.isPressed)
+      end
+    end
     -- If we just changed to true and have a target door to unlock, persist and update live props
     if (not was) and self.isPressed and type(self.unlockDoor) == 'string' and self.unlockDoor ~= '' then
       -- Persist in SaveState overlay

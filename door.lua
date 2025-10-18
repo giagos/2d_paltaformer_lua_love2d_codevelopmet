@@ -108,6 +108,10 @@ function Door:setOpen(flag)
     self:_applyCollisionMode()
     -- Persist
     SaveState.setEntityPropCurrent(self.name, 'isOpen', self.isOpen)
+    -- Keep live Tiled props in sync so update() doesn't immediately overwrite
+    if GameContext and GameContext.setEntityProp then
+      GameContext.setEntityProp(self.name, 'isOpen', self.isOpen)
+    end
   end
   return self.isOpen
 end
@@ -118,6 +122,10 @@ function Door:setLocked(flag)
     self.isLocked = v
     -- Persist
     SaveState.setEntityPropCurrent(self.name, 'locked', self.isLocked)
+    -- Keep live Tiled props in sync so update() doesn't immediately overwrite
+    if GameContext and GameContext.setEntityProp then
+      GameContext.setEntityProp(self.name, 'locked', self.isLocked)
+    end
   end
   return self.isLocked
 end

@@ -53,6 +53,7 @@ function Map:getPlayer() return state.player end
 function Map:getScale() return state.scale end
 function Map:getMapWidth() return state.mapWidth end
 function Map:_getTransitions() return state.transitions end
+function Map:_getEntities() return state.entities end
 
 -- Optional: change or query current level base path (without .lua)
 function Map:setCurrentLevel(basePath)
