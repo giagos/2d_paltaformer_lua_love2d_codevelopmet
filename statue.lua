@@ -12,8 +12,10 @@ local M = {}
 
 -- Internal state (singleton)
 local x, y = 0, 0
-local imgOff, imgOn
-local animOn -- anim8 animation for solved state (single-frame for now)
+--local imgOff, imgOn
+local sheet = love.graphics.newImage('asets/sprites/statue.png')
+local anim_on_idle -- anim8 animation for solved state (single-frame for now)
+local anim_off
 local originX, originY = 0, 0
 local loaded = false
 
@@ -23,14 +25,15 @@ function M.load(px, py)
   x, y = px or x, py or y
   if not loaded then
     -- Static image for unsolved state
-    imgOff = love.graphics.newImage('asets/sprites/statue.png')
+    --imgOff = love.graphics.newImage('asets/sprites/statue.png')
     -- Solved state prepared for future animation: currently a single-frame anim8 animation
-    imgOn  = love.graphics.newImage('asets/sprites/statueL.png')
+   -- imgOn  = love.graphics.newImage('asets/sprites/statueL.png')
 
     -- Build a single-frame animation covering the whole image
-    local fw, fh = imgOn:getWidth(), imgOn:getHeight()
-    local grid = anim8.newGrid(fw, fh, fw, fh)
-    animOn = anim8.newAnimation(grid('1-1', '1-1'), 0.2) -- placeholder frame time
+    local fw, fh = 32, 32
+    local grid = anim8.newGrid(32, 32, sheet:getWidth(), sheet:getHeight())
+    anim_off = anim8.newAnimation(grid(1,1), 1)
+    anim_on_idle = anim8.newAnimation(grid('17-20',1), 0.2) -- placeholder frame time
 
     originX, originY = fw / 2, fh / 2
     loaded = true
@@ -50,7 +53,7 @@ function M:update(dt)
   --   so 'dt' becomes a table instead of a number. The guard below resets it to 0 in that case
   --   to avoid anim8 math on a table (which would error).
   if type(dt) ~= 'number' then dt = 0 end
-  if animOn then animOn:update(dt) end
+  if anim_on_idle then anim_on_idle:update(dt) end
 end
 
 local function getCurrentImage()
@@ -59,21 +62,18 @@ local function getCurrentImage()
     props = GameContext.getEntityObjectProperties('bell1')
   end
   local solved = props and props.isSolved or false
-  return solved and imgOn or imgOff
+  return solved and anim_on_idle or anim_off
 end
 
 function M:draw()
   if not loaded then return end
-  local img = getCurrentImage()
-  if not img then return end
-  love.graphics.setColor(1,1,1,1)
-  if img == imgOn and animOn then
-    animOn:draw(imgOn, x, y, 0, 1, 1, originX, originY)
+  local anim = getCurrentImage()
+  if not anim then return end
+  if anim == anim_on_idle then
+    anim_on_idle:draw(sheet, x, y, 0, 1, 1, originX, originY)
   else
-    local ox, oy = (img:getWidth() / 2), (img:getHeight() / 2)
-    love.graphics.draw(img, x, y, 0, 1, 1, ox, oy)
+    anim_off:draw(sheet, x, y, 0, 1, 1, originX, originY)
   end
-  love.graphics.setColor(1,1,1,1)
 end
 
 -- FUTURE: Single spritesheet migration (one image for both states)
