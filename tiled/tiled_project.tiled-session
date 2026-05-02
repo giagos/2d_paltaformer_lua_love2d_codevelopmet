@@ -6,10 +6,10 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
-        ".",
-        "map",
+        "map/tsx",
         "map/tmx",
-        "map/tsx"
+        "map",
+        "."
     ],
     "fileStates": {
         "": {
@@ -73,22 +73,22 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 364.75,
+                "x": 400,
                 "y": 400.25
             }
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
                 3,
+                4,
                 2,
-                5,
-                4
+                5
             ],
-            "scale": 4,
+            "scale": 1.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 531.375,
-                "y": 297.125
+                "x": 300.3333333333333,
+                "y": 334.33333333333326
             }
         },
         "map/tmx/untitled.tmx#BaseTileset": {
@@ -134,13 +134,13 @@
     "project": "tiled_project.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "map/tmx/map2.tmx",
-        "map/tmx/untitled.tmx",
+        "map/tmx/rules/AutoTileRules.tmx",
         "map/tsx/placeholder.tsx",
+        "map/tmx/untitled.tmx",
+        "map/tmx/map2.tmx",
         "map/tsx/untitled.tmx",
         "map/tmx/map3.tmx",
-        "map/tmx/map4.tmx",
-        "map/tmx/rules/AutoTileRules.tmx"
+        "map/tmx/map4.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
