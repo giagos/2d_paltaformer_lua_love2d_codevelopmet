@@ -6,11 +6,12 @@
     "activeFile": "map/tmx/untitled.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
-        "map/tsx",
         "map/tmx",
+        ".",
         "map",
-        "."
+        "map/tsx"
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
             "scaleInDock": 2
@@ -73,16 +74,16 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 400,
-                "y": 400.25
+                "x": 569.25,
+                "y": 511.25
             }
         },
         "map/tmx/untitled.tmx": {
             "expandedObjectLayers": [
-                3,
                 4,
                 2,
-                5
+                5,
+                3
             ],
             "scale": 1.5,
             "selectedLayer": 6,
