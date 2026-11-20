@@ -20,12 +20,9 @@ The same level with the debug tools enabled. Collider outlines and trigger regio
 
 [View the full-size debug screenshot](./mis/debug-overlays.png)
 
-<details>
-<summary>Original gameplay GIF</summary>
+### Original Gameplay Demo
 
 ![Original platformer gameplay recording](./mis/love_kvWX7bSqY6.gif)
-
-</details>
 
 ## Run the Game
 
